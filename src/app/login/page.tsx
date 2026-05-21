@@ -4,8 +4,8 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-	title: 'Sign In',
-	description: 'Sign in to your IBS London account',
+	title: 'Entrar',
+	description: 'Acesse sua conta',
 }
 
 export default async function LoginPage() {

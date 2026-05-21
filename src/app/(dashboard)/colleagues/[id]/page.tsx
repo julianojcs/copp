@@ -36,18 +36,20 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 	const user = await User.findById(id).lean()
 
 	if (!user) {
-		return { title: 'User not found' }
+		return { title: 'Usuário não encontrado' }
 	}
 
 	return { title: user.name }
 }
 
+import { CARGO_LABELS } from '@/lib/i18n'
+import { PF_CARGOS } from '@/lib/constants'
+
 const roleColors: Record<string, string> = {
-	student: 'bg-blue-500/10 text-blue-500',
-	teacher: 'bg-purple-500/10 text-purple-500',
-	advisor: 'bg-green-500/10 text-green-500',
-	coordinator: 'bg-orange-500/10 text-orange-500',
-	guest: 'bg-gray-500/10 text-gray-500',
+	aluno: 'bg-blue-500/10 text-blue-500',
+	instrutor: 'bg-purple-500/10 text-purple-500',
+	coordenador: 'bg-orange-500/10 text-orange-500',
+	admin: 'bg-gray-500/10 text-gray-500',
 }
 
 export default async function ColleagueDetailPage({ params }: PageParams) {
@@ -87,7 +89,7 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 			<Link href="/colleagues">
 				<Button variant="ghost" size="sm">
 					<ArrowLeft className="mr-2 h-4 w-4" />
-					Back to classmates
+					Voltar para colegas
 				</Button>
 			</Link>
 
@@ -106,7 +108,7 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 							<div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
 								<h1 className="text-3xl font-bold">{user.name}</h1>
 								<Badge
-									className={`${roleColors[user.role] || roleColors.guest} w-fit mx-auto md:mx-0`}
+									className={`${roleColors[user.role] || 'bg-gray-500/10 text-gray-500'} w-fit mx-auto md:mx-0`}
 								>
 									{user.role.charAt(0).toUpperCase() + user.role.slice(1)}
 								</Badge>
@@ -164,7 +166,7 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 
 								{isOwnProfile && (
 									<Link href="/profile">
-										<Button size="sm">Edit Profile</Button>
+										<Button size="sm">Editar perfil</Button>
 									</Link>
 								)}
 							</div>
@@ -177,7 +179,7 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 			{(user.linkedin || user.instagram || user.github || user.twitter) && (
 				<Card>
 					<CardHeader>
-						<CardTitle>Social Profiles</CardTitle>
+						<CardTitle>Redes sociais</CardTitle>
 					</CardHeader>
 					<CardContent className="flex flex-wrap gap-4">
 						{user.linkedin && (
@@ -235,7 +237,7 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 			{photos.length > 0 && (
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between">
-						<CardTitle>Photos</CardTitle>
+						<CardTitle>Fotos</CardTitle>
 						<Link href={`/gallery?userId=${id}`}>
 							<Button variant="ghost" size="sm">
 								View all

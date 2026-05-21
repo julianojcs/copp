@@ -51,7 +51,7 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 
 	const isLiked = photo.likes.some((like) => like._id === session?.user?.id)
 	const isOwner = photo.uploadedBy._id === session?.user?.id
-	const isCoordinator = session?.user?.role === 'coordinator'
+	const isCoordinator = session?.user?.role === 'coordenador' || session?.user?.role === 'admin'
 
 	const handleLike = async () => {
 		if (isLiking) return

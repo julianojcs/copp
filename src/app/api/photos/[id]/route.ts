@@ -60,9 +60,10 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
 		if (
 			photo.uploadedBy.toString() !== session.user.id &&
-			session.user.role !== 'coordinator'
+			session.user.role !== 'coordenador' &&
+			session.user.role !== 'admin'
 		) {
-			return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+			return NextResponse.json({ error: 'Sem permissão para excluir esta foto.' }, { status: 403 })
 		}
 
 		await deleteImage(photo.publicId)

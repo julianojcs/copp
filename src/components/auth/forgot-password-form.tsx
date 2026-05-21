@@ -44,16 +44,16 @@ export function ForgotPasswordForm() {
 			const result = await response.json()
 
 			if (!response.ok) {
-				setError(result.error || 'Failed to process your request. Please try again.')
+				setError(result.error || 'Não foi possível processar sua solicitação. Tente novamente.')
 				return
 			}
 
 			setSuccess(true)
 		} catch (err) {
 			if (err instanceof TypeError && err.message.includes('fetch')) {
-				setError('Unable to connect to the server. Please check your internet connection.')
+				setError('Não foi possível conectar ao servidor. Verifique sua conexão.')
 			} else {
-				setError('An unexpected error occurred. Please try again later.')
+				setError('Ocorreu um erro inesperado. Tente novamente mais tarde.')
 			}
 		} finally {
 			setIsLoading(false)
@@ -65,7 +65,7 @@ export function ForgotPasswordForm() {
 			<Card className="w-full max-w-md">
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl font-bold text-center text-green-600">
-						Check your email
+						Verifique seu e-mail
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="text-center space-y-4">
@@ -76,7 +76,7 @@ export function ForgotPasswordForm() {
 					<Link href="/login">
 						<Button variant="outline" className="w-full">
 							<ArrowLeft className="mr-2 h-4 w-4" />
-							Back to login
+							Voltar para o login
 						</Button>
 					</Link>
 				</CardContent>
@@ -88,10 +88,10 @@ export function ForgotPasswordForm() {
 		<Card className="w-full max-w-md">
 			<CardHeader className="space-y-1">
 				<CardTitle className="text-2xl font-bold text-center">
-					Forgot password?
+					Esqueci minha senha
 				</CardTitle>
 				<CardDescription className="text-center">
-					Enter your email and we&apos;ll send you a reset link
+					Informe seu e-mail e enviaremos um link de redefinição
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
@@ -127,10 +127,10 @@ export function ForgotPasswordForm() {
 						{isLoading ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Sending...
+								Enviando...
 							</>
 						) : (
-							'Send reset link'
+							'Enviar link de redefinição'
 						)}
 					</Button>
 				</form>
@@ -141,7 +141,7 @@ export function ForgotPasswordForm() {
 						className="text-sm text-muted-foreground hover:text-primary inline-flex items-center"
 					>
 						<ArrowLeft className="mr-2 h-4 w-4" />
-						Back to login
+						Voltar para o login
 					</Link>
 				</div>
 			</CardContent>

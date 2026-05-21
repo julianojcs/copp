@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { X, UserCircle, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { USER_ROLES } from '@/lib/constants'
 
-const STORAGE_KEY = 'ibs_profile_banner_dismissed'
+const STORAGE_KEY = 'copp_profile_banner_dismissed'
 
 export function ProfileCompletionBanner() {
 	const { data: session } = useSession()
@@ -14,11 +15,10 @@ export function ProfileCompletionBanner() {
 	const [isDismissed, setIsDismissed] = useState(false)
 	const [isClient, setIsClient] = useState(false)
 
-	// Ensure we're on client side
+	// Garantir que estamos no lado do cliente
 	useEffect(() => {
 		setIsClient(true)
 
-		// Check localStorage for permanent dismissal
 		if (typeof window !== 'undefined') {
 			const dismissed = localStorage.getItem(STORAGE_KEY)
 			if (dismissed === 'true') {
@@ -27,22 +27,22 @@ export function ProfileCompletionBanner() {
 		}
 	}, [])
 
-	// Don't show if not on client yet, session not loaded, or dismissed
 	if (!isClient || !session?.user || isDismissed) {
 		return null
 	}
 
-	// Calculate completion from session social fields directly (more reliable than profileCompleted flag)
-	const socialFields = ['linkedin', 'instagram', 'twitter', 'whatsapp', 'github'] as const
-	const filledCount = socialFields.filter((field) => {
-		const value = session.user[field]
-		return value && value.trim() !== ''
-	}).length
+	const u = session.user
+	const isAdmin = u.role === USER_ROLES.ADMIN
 
-	// Profile is complete if user has 2+ social fields filled
-	const isProfileComplete = filledCount >= 2
+	// Campos obrigatórios: whatsapp, lotacao, e cargo (exceto admin)
+	const missingFields: string[] = []
+	if (!u.whatsapp) missingFields.push('WhatsApp')
+	if (!u.lotacao) missingFields.push('Lotação')
+	if (!isAdmin && !u.cargo) missingFields.push('Cargo')
 
-	// If profile is complete, permanently dismiss and don't show
+	const isProfileComplete = missingFields.length === 0
+
+	// Se completo, dispensar permanentemente
 	if (isProfileComplete) {
 		if (typeof window !== 'undefined') {
 			localStorage.setItem(STORAGE_KEY, 'true')
@@ -50,10 +50,7 @@ export function ProfileCompletionBanner() {
 		return null
 	}
 
-	const percentage = Math.round((filledCount / socialFields.length) * 100)
-
 	const handleDismiss = () => {
-		// Permanently dismiss using localStorage
 		if (typeof window !== 'undefined') {
 			localStorage.setItem(STORAGE_KEY, 'true')
 		}
@@ -65,7 +62,7 @@ export function ProfileCompletionBanner() {
 			<button
 				onClick={handleDismiss}
 				className="absolute top-3 right-3 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
-				aria-label="Dismiss banner"
+				aria-label="Fechar aviso"
 			>
 				<X className="h-5 w-5" />
 			</button>
@@ -77,31 +74,18 @@ export function ProfileCompletionBanner() {
 
 				<div className="flex-1 min-w-0">
 					<h3 className="font-semibold text-amber-900 dark:text-amber-100 text-lg">
-						Complete your profile to connect with classmates!
+						Complete seu perfil para acessar o diretório!
 					</h3>
 					<p className="text-amber-700 dark:text-amber-300 mt-1 text-sm">
-						Share your social links so your IBS London colleagues can find and connect with you.
-						Your profile is currently <strong>{percentage}%</strong> complete.
+						Falta{missingFields.length > 1 ? 'm' : ''} preencher:{' '}
+						<strong>{missingFields.join(', ')}</strong>.
 					</p>
 
-					{/* Progress bar */}
-					<div className="mt-3 mb-4">
-						<div className="h-2 bg-amber-200 dark:bg-amber-900/50 rounded-full overflow-hidden">
-							<div
-								className="h-full bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 transition-all duration-300"
-								style={{ width: `${percentage}%` }}
-							/>
-						</div>
-						<p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-							Add at least 2 social links to complete your profile
-						</p>
-					</div>
-
 					<Button
-						onClick={() => router.push('/profile')}
-						className="bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white"
+						onClick={() => router.push('/profile?complete=1')}
+						className="mt-4 bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white"
 					>
-						Complete Profile
+						Completar perfil
 						<ArrowRight className="ml-2 h-4 w-4" />
 					</Button>
 				</div>

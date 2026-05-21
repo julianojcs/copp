@@ -17,7 +17,7 @@ function VerifyEmailContent() {
 		const verifyEmail = async () => {
 			if (!token) {
 				setStatus('error')
-				setMessage('Invalid verification link.')
+				setMessage('Link de verificação inválido.')
 				return
 			}
 
@@ -39,7 +39,7 @@ function VerifyEmailContent() {
 				}
 			} catch {
 				setStatus('error')
-				setMessage('Something went wrong. Please try again.')
+				setMessage('Ocorreu um erro. Tente novamente.')
 			}
 		}
 
@@ -50,14 +50,14 @@ function VerifyEmailContent() {
 		<Card className="w-full max-w-md">
 			<CardHeader>
 				<CardTitle className="text-2xl font-bold text-center">
-					Email Verification
+					Verificação de e-mail
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="text-center space-y-4">
 				{status === 'loading' && (
 					<>
 						<Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
-						<p className="text-muted-foreground">Verifying your email...</p>
+						<p className="text-muted-foreground">Verificando seu e-mail...</p>
 					</>
 				)}
 
@@ -66,7 +66,7 @@ function VerifyEmailContent() {
 						<CheckCircle className="h-12 w-12 mx-auto text-green-500" />
 						<p className="text-green-600 font-medium">{message}</p>
 						<Link href="/login">
-							<Button className="w-full">Sign in to your account</Button>
+							<Button className="w-full">Acessar minha conta</Button>
 						</Link>
 					</>
 				)}
@@ -77,7 +77,7 @@ function VerifyEmailContent() {
 						<p className="text-destructive font-medium">{message}</p>
 						<Link href="/login">
 							<Button variant="outline" className="w-full">
-								Back to login
+								Voltar para o login
 							</Button>
 						</Link>
 					</>
@@ -92,12 +92,12 @@ function LoadingFallback() {
 		<Card className="w-full max-w-md">
 			<CardHeader>
 				<CardTitle className="text-2xl font-bold text-center">
-					Email Verification
+					Verificação de e-mail
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="text-center space-y-4">
 				<Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
-				<p className="text-muted-foreground">Loading...</p>
+				<p className="text-muted-foreground">Carregando...</p>
 			</CardContent>
 		</Card>
 	)

@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
 import { auth } from '@/lib/auth'
 import { createError, formatErrorResponse } from '@/lib/errors'
+import { USER_STATUS } from '@/lib/constants'
 
 export async function GET(req: NextRequest) {
 	try {
@@ -17,24 +18,28 @@ export async function GET(req: NextRequest) {
 
 		const { searchParams } = new URL(req.url)
 		const search = searchParams.get('search') || ''
-		const courseName = searchParams.get('courseName') || ''
-		const country = searchParams.get('country') || ''
+		const lotacao = searchParams.get('lotacao') || ''
+		const cargo = searchParams.get('cargo') || ''
 		const role = searchParams.get('role') || ''
 		const page = parseInt(searchParams.get('page') || '1')
 		const limit = parseInt(searchParams.get('limit') || '12')
 
-		const query: Record<string, unknown> = { isActive: true }
+		// Apenas usuários aprovados e ativos são visíveis no diretório
+		const query: Record<string, unknown> = {
+			isActive: true,
+			status: USER_STATUS.APPROVED,
+		}
 
 		if (search) {
 			query.$text = { $search: search }
 		}
 
-		if (courseName) {
-			query.courseName = courseName
+		if (lotacao) {
+			query.lotacao = { $regex: lotacao, $options: 'i' }
 		}
 
-		if (country) {
-			query.country = country
+		if (cargo) {
+			query.cargo = cargo
 		}
 
 		if (role) {
@@ -45,7 +50,7 @@ export async function GET(req: NextRequest) {
 
 		const [users, total] = await Promise.all([
 			User.find(query)
-				.select('name email avatar role courseName city country phone whatsapp linkedin instagram github twitter bio company emailVerified isActive')
+				.select('name email avatar role cargo lotacao whatsapp linkedin instagram github twitter bio company emailVerified isActive createdAt')
 				.sort({ name: 1 })
 				.skip(skip)
 				.limit(limit)

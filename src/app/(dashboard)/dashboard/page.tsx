@@ -17,10 +17,10 @@ async function getStats() {
 	await connectDB()
 
 	const [totalUsers, totalPhotos, recentUsers] = await Promise.all([
-		User.countDocuments({ isActive: true }),
+		User.countDocuments({ isActive: true, status: 'approved' }),
 		Photo.countDocuments({ isPublic: true }),
-		User.find({ isActive: true })
-			.select('name avatar role')
+		User.find({ isActive: true, status: 'approved' })
+			.select('name avatar role cargo lotacao')
 			.sort({ createdAt: -1 })
 			.limit(5)
 			.lean(),
@@ -47,10 +47,10 @@ export default async function DashboardPage() {
 			{/* Welcome Section */}
 			<div className="border rounded-lg p-4 bg-muted/30">
 				<h1 className="text-xl font-semibold text-foreground">
-					Welcome back, {session?.user?.name?.split(' ')[0]}! 👋
+					Olá, {session?.user?.name?.split(' ')[0]}!
 				</h1>
 				<p className="text-muted-foreground text-sm mt-1">
-					Connect with your IBS London classmates and share your memories.
+					Conecte-se com os colegas da turma e compartilhe suas memórias.
 				</p>
 			</div>
 
@@ -60,14 +60,14 @@ export default async function DashboardPage() {
 					<Card className="hover:bg-muted/50 transition-colors cursor-pointer">
 						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 							<CardTitle className="text-sm font-medium">
-								Total Classmates
+								Total de colegas
 							</CardTitle>
 							<Users className="h-4 w-4 text-muted-foreground" />
 						</CardHeader>
 						<CardContent>
 							<div className="text-2xl font-bold">{totalUsers}</div>
 							<p className="text-xs text-muted-foreground">
-								Registered participants
+								Participantes cadastrados
 							</p>
 						</CardContent>
 					</Card>
@@ -76,13 +76,13 @@ export default async function DashboardPage() {
 				<Link href="/gallery">
 					<Card className="hover:bg-muted/50 transition-colors cursor-pointer">
 						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-							<CardTitle className="text-sm font-medium">Photos Shared</CardTitle>
+							<CardTitle className="text-sm font-medium">Fotos compartilhadas</CardTitle>
 							<Image className="h-4 w-4 text-muted-foreground" />
 						</CardHeader>
 						<CardContent>
 							<div className="text-2xl font-bold">{totalPhotos}</div>
 							<p className="text-xs text-muted-foreground">
-								Memories from London
+								Memórias da turma
 							</p>
 						</CardContent>
 					</Card>
@@ -90,27 +90,27 @@ export default async function DashboardPage() {
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
+						<CardTitle className="text-sm font-medium">Ações rápidas</CardTitle>
 						<Camera className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent className="space-y-2">
 						<Link href="/gallery">
 							<Button variant="outline" className="w-full justify-start text-sm">
 								<Camera className="mr-2 h-4 w-4" />
-								Upload a photo
+								Enviar foto
 							</Button>
 						</Link>
 					</CardContent>
 				</Card>
 			</div>
 
-			{/* Recent Members */}
+			{/* Novos membros */}
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between">
-					<CardTitle>Recent Members</CardTitle>
+					<CardTitle>Novos membros</CardTitle>
 					<Link href="/colleagues">
 						<Button variant="ghost" size="sm">
-							View all
+							Ver todos
 							<ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
 					</Link>
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
 				<CardContent>
 					{recentUsers.length === 0 ? (
 						<p className="text-muted-foreground text-center py-8">
-							No members yet. Be the first!
+							Nenhum membro ainda. Seja o primeiro!
 						</p>
 					) : (
 						<div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-4">

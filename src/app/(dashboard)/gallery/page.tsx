@@ -75,7 +75,7 @@ export default function GalleryPage() {
 			}
 		} catch (err) {
 			console.error('Failed to fetch photos:', err)
-			toast.error('Failed to load photos')
+			toast.error('Erro ao carregar fotos')
 		} finally {
 			setIsLoading(false)
 			setIsFetchingMore(false)
@@ -109,7 +109,7 @@ export default function GalleryPage() {
 
 		if (!uploadResponse.ok) {
 			const error = await uploadResponse.json()
-			throw new Error(error.error || 'Upload failed')
+			throw new Error(error.error || 'Falha no envio da foto')
 		}
 
 		const uploadResult = await uploadResponse.json()
@@ -130,10 +130,10 @@ export default function GalleryPage() {
 
 		if (!photoResponse.ok) {
 			const error = await photoResponse.json()
-			throw new Error(error.error || 'Failed to save photo')
+			throw new Error(error.error || 'Erro ao salvar foto')
 		}
 
-		toast.success('Photo uploaded successfully!')
+		toast.success('Foto enviada com sucesso!')
 		setPage(1)
 		fetchPhotos(1)
 	}
@@ -155,7 +155,7 @@ export default function GalleryPage() {
 			}
 		} catch (err) {
 			console.error('Failed to like photo:', err)
-			toast.error('Failed to like photo')
+			toast.error('Erro ao curtir a foto')
 		}
 	}
 
@@ -166,15 +166,15 @@ export default function GalleryPage() {
 			})
 
 			if (response.ok) {
-				toast.success('Photo deleted successfully!')
+				toast.success('Foto excluída com sucesso!')
 				setPhotos((prev) => prev.filter(p => p._id !== photoId))
 			} else {
 				const error = await response.json()
-				toast.error(error.error || 'Failed to delete photo')
+				toast.error(error.error || 'Erro ao excluir foto')
 			}
 		} catch (err) {
 			console.error('Failed to delete photo:', err)
-			toast.error('Failed to delete photo')
+			toast.error('Erro ao excluir foto')
 		}
 	}
 
@@ -182,15 +182,15 @@ export default function GalleryPage() {
 		<div className="space-y-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-bold">Photo Gallery</h1>
+					<h1 className="text-3xl font-bold">Galeria de Fotos</h1>
 					<p className="text-muted-foreground">
-						Share and view memories from the London trip
+						Compartilhe e reviva os momentos do curso
 					</p>
 				</div>
 
 				<Button onClick={() => setIsUploadOpen(true)} className="w-full sm:w-auto">
 					<Plus className="mr-2 h-4 w-4" />
-					Upload Photo
+					Enviar Foto
 				</Button>
 			</div>
 
@@ -201,11 +201,11 @@ export default function GalleryPage() {
 			) : photos.length === 0 ? (
 				<div className="text-center py-12">
 					<p className="text-muted-foreground mb-4">
-						No photos yet. Be the first to share!
+						Nenhuma foto ainda. Seja o primeiro a compartilhar!
 					</p>
 					<Button onClick={() => setIsUploadOpen(true)}>
 						<Plus className="mr-2 h-4 w-4" />
-						Upload your first photo
+						Enviar primeira foto
 					</Button>
 				</div>
 			) : (

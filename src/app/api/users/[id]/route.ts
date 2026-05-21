@@ -6,6 +6,7 @@ import { auth } from '@/lib/auth'
 import { profileSchema } from '@/lib/validations'
 import { createError, formatErrorResponse, ErrorCode } from '@/lib/errors'
 import { sendEmailChangeVerification } from '@/lib/email'
+import { USER_ROLES, USER_STATUS } from '@/lib/constants'
 
 interface RouteParams {
 	params: Promise<{ id: string }>
@@ -33,6 +34,14 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 			return NextResponse.json(error.toJSON(), { status: error.statusCode })
 		}
 
+		// Usuários não-admin só podem ver perfis aprovados
+		const role = session.user.role
+		const isAdmin = role === USER_ROLES.ADMIN || role === USER_ROLES.COORDENADOR
+		if (!isAdmin && session.user.id !== id && user.status !== USER_STATUS.APPROVED) {
+			const error = createError.notFound('User')
+			return NextResponse.json(error.toJSON(), { status: error.statusCode })
+		}
+
 		return NextResponse.json({ user })
 	} catch (err) {
 		const { body, status } = formatErrorResponse(err, 'GET /api/users/[id]')
@@ -51,7 +60,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
 		const { id } = await params
 
-		if (session.user.id !== id && session.user.role !== 'coordinator') {
+		const canEdit =
+			session.user.id === id ||
+			session.user.role === USER_ROLES.COORDENADOR ||
+			session.user.role === USER_ROLES.ADMIN
+
+		if (!canEdit) {
 			const error = createError.forbidden()
 			return NextResponse.json(error.toJSON(), { status: error.statusCode })
 		}
@@ -77,14 +91,16 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 			return NextResponse.json(error.toJSON(), { status: error.statusCode })
 		}
 
-		const updateData: any = { ...validationResult.data }
+		const updateData: Record<string, unknown> = { ...validationResult.data }
 		let emailChanged = false
 
-		if (updateData.email && updateData.email.toLowerCase() !== currentUser.email.toLowerCase()) {
-			// Check if new email is already in use
+		if (
+			updateData.email &&
+			(updateData.email as string).toLowerCase() !== currentUser.email.toLowerCase()
+		) {
 			const emailExists = await User.findOne({
-				email: updateData.email.toLowerCase(),
-				_id: { $ne: id }
+				email: (updateData.email as string).toLowerCase(),
+				_id: { $ne: id },
 			})
 			if (emailExists) {
 				const error = createError.emailExists()
@@ -97,12 +113,14 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 			updateData.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000)
 		}
 
-		// Calculate profile completion based on social fields
-		const socialFields = ['linkedin', 'instagram', 'twitter', 'whatsapp', 'github']
-		const filledSocialFields = socialFields.filter(
-			(field) => updateData[field] && updateData[field].trim() !== ''
-		).length
-		updateData.profileCompleted = filledSocialFields >= 2
+		// Perfil completo quando campos obrigatórios estão preenchidos
+		const isAdmin = updateData.role === USER_ROLES.ADMIN
+		const profileCompleted =
+			Boolean(updateData.whatsapp) &&
+			Boolean(updateData.lotacao) &&
+			(isAdmin || Boolean(updateData.cargo))
+
+		updateData.profileCompleted = profileCompleted
 
 		const user = await User.findByIdAndUpdate(
 			id,
@@ -112,7 +130,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
 		if (emailChanged && user) {
 			try {
-				await sendEmailChangeVerification(user.email, updateData.verificationToken, user.name)
+				await sendEmailChangeVerification(
+					user.email,
+					updateData.verificationToken as string,
+					user.name
+				)
 			} catch (emailError) {
 				console.error('Failed to send verification email for email change:', emailError)
 			}
@@ -121,8 +143,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 		return NextResponse.json({
 			user,
 			message: emailChanged
-				? 'Profile updated! A verification email has been sent to your new address.'
-				: 'Profile updated successfully!'
+				? 'Perfil atualizado! Um email de verificação foi enviado para o novo endereço.'
+				: 'Perfil atualizado com sucesso!',
 		})
 	} catch (err) {
 		const { body, status } = formatErrorResponse(err, 'PUT /api/users/[id]')

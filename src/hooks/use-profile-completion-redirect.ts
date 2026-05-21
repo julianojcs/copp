@@ -1,56 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter, usePathname } from 'next/navigation'
 
-/**
- * Hook that redirects users with incomplete profiles to the profile page
- * Only redirects on first visit after login (uses sessionStorage to track)
- */
+const ALLOW_PATHS = ['/profile', '/login', '/register', '/aguardando-aprovacao']
+
 export function useProfileCompletionRedirect() {
-	const { data: session, status } = useSession()
-	const router = useRouter()
-	const pathname = usePathname()
-	const [hasChecked, setHasChecked] = useState(false)
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const pathname = usePathname()
 
-	useEffect(() => {
-		// Only run on client side and when session is loaded
-		if (typeof window === 'undefined' || status !== 'authenticated' || hasChecked) {
-			return
-		}
+  useEffect(() => {
+    if (status !== 'authenticated') return
+    if (ALLOW_PATHS.some((p) => pathname.startsWith(p))) return
 
-		// Don't redirect if already on profile page
-		if (pathname === '/profile') {
-			setHasChecked(true)
-			return
-		}
+    const u = session?.user
+    if (!u) return
 
-		// Check if we've already shown the redirect this session
-		const hasSeenProfilePrompt = sessionStorage.getItem('ibs_profile_prompt_shown')
-		if (hasSeenProfilePrompt) {
-			setHasChecked(true)
-			return
-		}
+    const missingBasics =
+      !u.whatsapp ||
+      !u.lotacao ||
+      (u.role !== 'admin' && !u.cargo)
 
-		// Calculate profile completion from session social fields directly
-		// More reliable than relying on profileCompleted flag
-		const socialFields = ['linkedin', 'instagram', 'twitter', 'whatsapp', 'github'] as const
-		const filledCount = socialFields.filter((field) => {
-			const value = session?.user?.[field]
-			return value && value.trim() !== ''
-		}).length
-		const isProfileComplete = filledCount >= 2
-
-		// Check if profile is incomplete
-		if (session?.user && !isProfileComplete) {
-			// Mark that we've shown the prompt this session
-			sessionStorage.setItem('ibs_profile_prompt_shown', 'true')
-
-			// Redirect to profile page with onboarding flag
-			router.push('/profile?onboarding=true')
-		}
-
-		setHasChecked(true)
-	}, [session, status, router, pathname, hasChecked])
+    if (missingBasics) router.push('/profile?complete=1')
+  }, [session, status, pathname, router])
 }

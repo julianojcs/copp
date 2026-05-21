@@ -4,8 +4,8 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-	title: 'Forgot Password',
-	description: 'Reset your IBS London password',
+	title: 'Recuperar senha',
+	description: 'Redefina sua senha',
 }
 
 export default async function ForgotPasswordPage() {
