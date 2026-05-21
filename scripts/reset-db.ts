@@ -11,7 +11,12 @@ async function main() {
   }
 
   await mongoose.connect(uri)
-  const dbName = mongoose.connection.db.databaseName
+  const db = mongoose.connection.db
+  if (!db) {
+    console.error('No database connection')
+    process.exit(1)
+  }
+  const dbName = db.databaseName
 
   console.log(`\n⚠️  This will DROP collections in DB: ${dbName}`)
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
@@ -26,7 +31,7 @@ async function main() {
   const targets = ['users', 'photos', 'courses', 'appsettings']
   for (const name of targets) {
     try {
-      await mongoose.connection.db.dropCollection(name)
+      await db.dropCollection(name)
       console.log(`  dropped ${name}`)
     } catch (e: any) {
       if (e.codeName === 'NamespaceNotFound') console.log(`  ${name} not present`)
