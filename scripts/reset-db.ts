@@ -1,5 +1,7 @@
 // scripts/reset-db.ts
-import 'dotenv/config'
+import { config as loadEnv } from 'dotenv'
+loadEnv({ path: '.env.local' })
+loadEnv()
 import mongoose from 'mongoose'
 import readline from 'node:readline/promises'
 
