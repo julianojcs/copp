@@ -49,42 +49,42 @@ export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode]
 // User-friendly error messages
 const errorMessages: Record<ErrorCodeType, string> = {
 	// Authentication
-	[ErrorCode.AUTH_INVALID_CREDENTIALS]: 'Invalid email or password. Please check your credentials and try again.',
-	[ErrorCode.AUTH_EMAIL_NOT_VERIFIED]: 'Please verify your email before signing in. Check your inbox for the verification link.',
-	[ErrorCode.AUTH_ACCOUNT_DEACTIVATED]: 'Your account has been deactivated. Please contact support for assistance.',
-	[ErrorCode.AUTH_SESSION_EXPIRED]: 'Your session has expired. Please sign in again.',
-	[ErrorCode.AUTH_UNAUTHORIZED]: 'You need to be signed in to access this resource.',
-	[ErrorCode.AUTH_GOOGLE_SIGNIN_REQUIRED]: 'This account was created with Google. Please sign in with Google.',
+	[ErrorCode.AUTH_INVALID_CREDENTIALS]: 'Email ou senha inválidos. Verifique suas credenciais e tente novamente.',
+	[ErrorCode.AUTH_EMAIL_NOT_VERIFIED]: 'Verifique seu email antes de fazer login. Confira sua caixa de entrada.',
+	[ErrorCode.AUTH_ACCOUNT_DEACTIVATED]: 'Sua conta foi desativada. Entre em contato com a coordenação.',
+	[ErrorCode.AUTH_SESSION_EXPIRED]: 'Sua sessão expirou. Faça login novamente.',
+	[ErrorCode.AUTH_UNAUTHORIZED]: 'Você precisa estar autenticado para acessar este recurso.',
+	[ErrorCode.AUTH_GOOGLE_SIGNIN_REQUIRED]: 'Esta conta foi criada com Google. Faça login pelo Google.',
 
 	// Validation
-	[ErrorCode.VALIDATION_FAILED]: 'Please check your input and try again.',
-	[ErrorCode.VALIDATION_EMAIL_EXISTS]: 'An account with this email already exists. Try signing in instead.',
-	[ErrorCode.VALIDATION_INVALID_TOKEN]: 'The verification link is invalid or has already been used.',
-	[ErrorCode.VALIDATION_TOKEN_EXPIRED]: 'The verification link has expired. Please request a new one.',
-	[ErrorCode.VALIDATION_REQUIRED_FIELD]: 'Please fill in all required fields.',
+	[ErrorCode.VALIDATION_FAILED]: 'Verifique os dados informados e tente novamente.',
+	[ErrorCode.VALIDATION_EMAIL_EXISTS]: 'Já existe uma conta com este email. Tente fazer login.',
+	[ErrorCode.VALIDATION_INVALID_TOKEN]: 'O link é inválido ou já foi utilizado.',
+	[ErrorCode.VALIDATION_TOKEN_EXPIRED]: 'O link expirou. Solicite um novo.',
+	[ErrorCode.VALIDATION_REQUIRED_FIELD]: 'Preencha todos os campos obrigatórios.',
 
 	// Database
-	[ErrorCode.DB_CONNECTION_FAILED]: 'Unable to connect to the database. Please try again in a few moments.',
-	[ErrorCode.DB_QUERY_FAILED]: 'An error occurred while processing your request. Please try again.',
-	[ErrorCode.DB_RECORD_NOT_FOUND]: 'The requested resource was not found.',
-	[ErrorCode.DB_DUPLICATE_ENTRY]: 'This record already exists in our system.',
+	[ErrorCode.DB_CONNECTION_FAILED]: 'Não foi possível conectar ao banco de dados. Tente novamente em instantes.',
+	[ErrorCode.DB_QUERY_FAILED]: 'Ocorreu um erro ao processar sua solicitação. Tente novamente.',
+	[ErrorCode.DB_RECORD_NOT_FOUND]: 'Recurso não encontrado.',
+	[ErrorCode.DB_DUPLICATE_ENTRY]: 'Este registro já existe.',
 
 	// External services
-	[ErrorCode.SERVICE_EMAIL_FAILED]: 'Failed to send email. Please try again or contact support.',
-	[ErrorCode.SERVICE_CLOUDINARY_FAILED]: 'Failed to process the image. Please try a different file.',
-	[ErrorCode.SERVICE_GOOGLE_AUTH_FAILED]: 'Google authentication failed. Please try again.',
+	[ErrorCode.SERVICE_EMAIL_FAILED]: 'Falha ao enviar email. Tente novamente ou contate a coordenação.',
+	[ErrorCode.SERVICE_CLOUDINARY_FAILED]: 'Falha ao processar a imagem. Tente outro arquivo.',
+	[ErrorCode.SERVICE_GOOGLE_AUTH_FAILED]: 'Autenticação com Google falhou. Tente novamente.',
 
 	// Upload
-	[ErrorCode.UPLOAD_NO_FILE]: 'Please select a file to upload.',
-	[ErrorCode.UPLOAD_INVALID_TYPE]: 'Invalid file type. Please upload an image (JPEG, PNG, GIF, or WebP).',
-	[ErrorCode.UPLOAD_SIZE_EXCEEDED]: 'File is too large. Maximum size is 5MB.',
-	[ErrorCode.UPLOAD_FAILED]: 'Failed to upload the file. Please try again.',
+	[ErrorCode.UPLOAD_NO_FILE]: 'Selecione um arquivo para enviar.',
+	[ErrorCode.UPLOAD_INVALID_TYPE]: 'Tipo de arquivo inválido. Envie uma imagem (JPEG, PNG, GIF ou WebP).',
+	[ErrorCode.UPLOAD_SIZE_EXCEEDED]: 'Arquivo muito grande. Tamanho máximo: 5MB.',
+	[ErrorCode.UPLOAD_FAILED]: 'Falha no envio do arquivo. Tente novamente.',
 
 	// General
-	[ErrorCode.INTERNAL_ERROR]: 'An unexpected error occurred. Our team has been notified.',
-	[ErrorCode.RATE_LIMITED]: 'Too many requests. Please wait a moment before trying again.',
-	[ErrorCode.NOT_FOUND]: 'The page or resource you requested was not found.',
-	[ErrorCode.FORBIDDEN]: 'You do not have permission to perform this action.',
+	[ErrorCode.INTERNAL_ERROR]: 'Ocorreu um erro inesperado. Nossa equipe foi notificada.',
+	[ErrorCode.RATE_LIMITED]: 'Muitas requisições. Aguarde um momento antes de tentar novamente.',
+	[ErrorCode.NOT_FOUND]: 'A página ou recurso não foi encontrado.',
+	[ErrorCode.FORBIDDEN]: 'Você não tem permissão para realizar esta ação.',
 }
 
 /**
