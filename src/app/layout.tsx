@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import { Providers } from '@/components/providers'
+import { getAppSettings } from '@/lib/app-settings'
 import './globals.css'
 
 const geistSans = Geist({
@@ -14,14 +15,12 @@ const geistMono = Geist_Mono({
 	subsets: ['latin'],
 })
 
-export const metadata: Metadata = {
-	title: {
-		default: 'IBS London - Classmate Registration',
-		template: '%s | IBS London',
-	},
-	description:
-		'Registration system for IBS Americas classmates from the London course. Connect with your colleagues, share memories, and stay in touch.',
-	keywords: ['IBS Americas', 'London', 'classmates', 'registration', 'networking'],
+export async function generateMetadata(): Promise<Metadata> {
+  const s = await getAppSettings()
+  return {
+    title: { default: s.brandName, template: `%s — ${s.brandName}` },
+    description: s.description,
+  }
 }
 
 interface RootLayoutProps {
@@ -30,7 +29,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang="pt-BR" suppressHydrationWarning>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
 			>
