@@ -19,7 +19,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
-import { profileSchema, type ProfileFormData } from '@/lib/validations'
+import { profileSchema, type ProfileFormData, changePasswordSchema, type ChangePasswordFormData } from '@/lib/validations'
 import { USER_ROLES, PF_CARGOS } from '@/lib/constants'
 import { ROLE_LABELS, CARGO_LABELS } from '@/lib/i18n'
 
@@ -62,6 +62,35 @@ export default function ProfilePage() {
 	const selectedRole = watch('role')
 	const selectedCargo = watch('cargo')
 	const isAdmin = selectedRole === USER_ROLES.ADMIN
+
+	const {
+		register: registerPassword,
+		handleSubmit: handleSubmitPassword,
+		reset: resetPassword,
+		formState: { errors: passwordErrors },
+	} = useForm<ChangePasswordFormData>({ resolver: zodResolver(changePasswordSchema) })
+
+	const [isPasswordLoading, setIsPasswordLoading] = useState(false)
+
+	const onChangePassword = async (data: ChangePasswordFormData) => {
+		if (!session?.user?.id) return
+		setIsPasswordLoading(true)
+		try {
+			const res = await fetch(`/api/users/${session.user.id}/change-password`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			})
+			const result = await res.json()
+			if (!res.ok) throw new Error(result.error || 'Erro ao alterar senha')
+			toast.success('Senha alterada com sucesso.')
+			resetPassword()
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Erro ao alterar senha')
+		} finally {
+			setIsPasswordLoading(false)
+		}
+	}
 
 	// Update form values when session is loaded
 	useEffect(() => {
@@ -541,6 +570,63 @@ export default function ProfilePage() {
 									<Save className="mr-2 h-4 w-4" />
 									Salvar alterações
 								</>
+							)}
+						</Button>
+					</form>
+				</CardContent>
+			</Card>
+
+			{/* Alterar Senha */}
+			<Card>
+				<CardHeader>
+					<CardTitle>Alterar senha</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={handleSubmitPassword(onChangePassword)} className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor="currentPassword">Senha atual</Label>
+							<Input
+								id="currentPassword"
+								type="password"
+								{...registerPassword('currentPassword')}
+								disabled={isPasswordLoading}
+							/>
+							{passwordErrors.currentPassword && (
+								<p className="text-sm text-destructive">{passwordErrors.currentPassword.message}</p>
+							)}
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="newPassword">Nova senha</Label>
+							<Input
+								id="newPassword"
+								type="password"
+								{...registerPassword('newPassword')}
+								disabled={isPasswordLoading}
+							/>
+							{passwordErrors.newPassword && (
+								<p className="text-sm text-destructive">{passwordErrors.newPassword.message}</p>
+							)}
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+							<Input
+								id="confirmPassword"
+								type="password"
+								{...registerPassword('confirmPassword')}
+								disabled={isPasswordLoading}
+							/>
+							{passwordErrors.confirmPassword && (
+								<p className="text-sm text-destructive">{passwordErrors.confirmPassword.message}</p>
+							)}
+						</div>
+						<Button type="submit" disabled={isPasswordLoading}>
+							{isPasswordLoading ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Alterando...
+								</>
+							) : (
+								'Alterar senha'
 							)}
 						</Button>
 					</form>

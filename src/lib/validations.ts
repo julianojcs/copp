@@ -128,3 +128,20 @@ export const photoSchema = z.object({
 })
 
 export type PhotoFormData = z.infer<typeof photoSchema>
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Senha atual é obrigatória'),
+    newPassword: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'As senhas não conferem',
+    path: ['confirmPassword'],
+  })
+  .refine((d) => d.newPassword !== d.currentPassword, {
+    message: 'A nova senha deve ser diferente da atual',
+    path: ['newPassword'],
+  })
+
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
