@@ -12,6 +12,7 @@ const publicRoutes = [
   '/reset-password',
   '/aguardando-aprovacao',
   '/api/courses',
+  '/api/branding',
 ]
 
 const MODERATOR_ROLES: ReadonlyArray<string> = [
