@@ -109,6 +109,25 @@ export async function POST(req: NextRequest) {
 		)
 	} catch (error) {
 		console.error('Check email error:', error)
+
+		const isDbUnavailable =
+			error instanceof Error &&
+			(error.name === 'MongooseServerSelectionError' ||
+				error.name === 'MongoServerSelectionError' ||
+				error.name === 'MongoNetworkError' ||
+				/ENOTFOUND|ETIMEDOUT|ECONNREFUSED|querySrv/i.test(error.message))
+
+		if (isDbUnavailable) {
+			return NextResponse.json(
+				{
+					success: false,
+					reason: 'service_unavailable',
+					message: 'Service is temporarily unavailable. Please try again in a few minutes.'
+				},
+				{ status: 503 }
+			)
+		}
+
 		return NextResponse.json(
 			{
 				success: false,

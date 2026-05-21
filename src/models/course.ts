@@ -60,7 +60,6 @@ const CourseSchema = new Schema<ICourse>(
 	}
 )
 
-CourseSchema.index({ code: 1 })
 CourseSchema.index({ isActive: 1 })
 
 export const Course = models.Course || model<ICourse>('Course', CourseSchema)
