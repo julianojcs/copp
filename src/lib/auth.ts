@@ -1,210 +1,102 @@
+// src/lib/auth.ts
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-import Google from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { connectDB } from '@/lib/db'
-import { User, type IUser } from '@/models/user'
+import { User } from '@/models/user'
+import type { SessionUser } from '@/types'
+import { USER_STATUS } from '@/lib/constants'
 
 declare module 'next-auth' {
-	interface Session {
-		user: {
-			id: string
-			email: string
-			name: string
-			avatar?: string
-			role: string
-			isEmailVerified: boolean
-			courseName?: string
-			city?: string
-			country?: string
-			whatsapp?: string
-			linkedin?: string
-			instagram?: string
-			github?: string
-			twitter?: string
-			company?: string
-			bio?: string
-			profileCompleted: boolean
-		}
-	}
-
-	interface User {
-		id: string
-		email: string
-		name: string
-		avatar?: string
-		role: string
-		isEmailVerified: boolean
-		courseName?: string
-		city?: string
-		country?: string
-		whatsapp?: string
-		linkedin?: string
-		instagram?: string
-		github?: string
-		twitter?: string
-		company?: string
-		bio?: string
-		profileCompleted: boolean
-	}
+  interface Session {
+    user: SessionUser
+  }
+  interface User extends SessionUser {}
 }
 
+const SESSION_KEYS: ReadonlyArray<keyof SessionUser> = [
+  'id', 'email', 'name', 'avatar', 'role', 'cargo', 'lotacao', 'status',
+  'courseId', 'courseName', 'city', 'country', 'whatsapp',
+  'linkedin', 'instagram', 'github', 'twitter', 'company', 'bio',
+  'isEmailVerified', 'profileCompleted',
+]
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-	providers: [
-		Credentials({
-			name: 'credentials',
-			credentials: {
-				email: { label: 'Email', type: 'email' },
-				password: { label: 'Password', type: 'password' },
-			},
-			async authorize(credentials) {
-				try {
-					if (!credentials?.email || !credentials?.password) {
-						return null
-					}
+  providers: [
+    Credentials({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Senha', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null
 
-					await connectDB()
+        await connectDB()
+        const user = await User.findOne({
+          email: (credentials.email as string).toLowerCase(),
+        }).select('+password')
 
-					const user = await User.findOne({
-						email: (credentials.email as string).toLowerCase(),
-					}).select('+password')
+        if (!user || !user.password) return null
 
-					if (!user) {
-						return null
-					}
+        const ok = await bcrypt.compare(credentials.password as string, user.password)
+        if (!ok) return null
 
-					if (!user.password) {
-						return null // Google account
-					}
+        if (!user.isActive) throw new Error('STATUS_INACTIVE')
+        if (user.status !== USER_STATUS.APPROVED) {
+          throw new Error(`STATUS_${String(user.status).toUpperCase()}`)
+        }
 
-					const isPasswordValid = await bcrypt.compare(
-						credentials.password as string,
-						user.password
-					)
-
-					if (!isPasswordValid) {
-						return null
-					}
-
-					if (!user.emailVerified) {
-						// Custom handling for unverified email could be done by throwing
-						// but let's stick to generic failure to avoid Configuration error for now
-						// or we can chance throwing a specific string that matches our client map
-						// BUT NextAuth v5 is strict. Let's return null to solve the immediate blocking issue.
-						return null
-					}
-
-					if (!user.isActive) {
-						return null
-					}
-
-					return {
-						id: user._id.toString(),
-						email: user.email,
-						name: user.name,
-						avatar: user.avatar,
-						role: user.role,
-						isEmailVerified: user.emailVerified,
-						courseName: user.courseName,
-						city: user.city,
-						country: user.country,
-						whatsapp: user.whatsapp,
-						linkedin: user.linkedin,
-						instagram: user.instagram,
-						github: user.github,
-						twitter: user.twitter,
-						company: user.company,
-						bio: user.bio,
-						profileCompleted: user.profileCompleted,
-					}
-				} catch (error) {
-					console.error('Auth error:', error)
-					return null
-				}
-			},
-		}),
-		// Google({
-		// 	clientId: process.env.GOOGLE_CLIENT_ID!,
-		// 	clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-		// }),
-	],
-	callbacks: {
-		async signIn({ user, account }) {
-			if (account?.provider === 'google') {
-				await connectDB()
-
-				const existingUser = await User.findOne({ email: user.email })
-
-				if (existingUser) {
-					if (!existingUser.googleId) {
-						await User.findByIdAndUpdate(existingUser._id, {
-							googleId: account.providerAccountId,
-							emailVerified: true,
-						})
-					}
-					return true
-				}
-
-				// For new Google users, redirect to complete profile
-				return `/complete-profile?email=${encodeURIComponent(user.email || '')}&name=${encodeURIComponent(user.name || '')}&googleId=${account.providerAccountId}&avatar=${encodeURIComponent(user.image || '')}`
-			}
-
-			return true
-		},
-		async jwt({ token, user, trigger, session }) {
-			if (user) {
-				token.id = user.id
-				token.role = user.role
-				token.avatar = user.avatar
-				token.isEmailVerified = user.isEmailVerified
-				token.courseName = user.courseName
-				token.city = user.city
-				token.country = user.country
-				token.whatsapp = user.whatsapp
-				token.linkedin = user.linkedin
-				token.instagram = user.instagram
-				token.github = user.github
-				token.twitter = user.twitter
-				token.company = user.company
-				token.bio = user.bio
-				token.profileCompleted = user.profileCompleted
-			}
-
-			if (trigger === 'update' && session) {
-				return { ...token, ...session }
-			}
-
-			return token
-		},
-		async session({ session, token }) {
-			if (token) {
-				session.user.id = token.id as string
-				session.user.role = token.role as string
-				session.user.avatar = token.avatar as string | undefined
-				session.user.isEmailVerified = token.isEmailVerified as boolean
-				session.user.courseName = token.courseName as string | undefined
-				session.user.city = token.city as string | undefined
-				session.user.country = token.country as string | undefined
-				session.user.whatsapp = token.whatsapp as string | undefined
-				session.user.linkedin = token.linkedin as string | undefined
-				session.user.instagram = token.instagram as string | undefined
-				session.user.github = token.github as string | undefined
-				session.user.twitter = token.twitter as string | undefined
-				session.user.company = token.company as string | undefined
-				session.user.bio = token.bio as string | undefined
-				session.user.profileCompleted = token.profileCompleted as boolean
-			}
-
-			return session
-		},
-	},
-	pages: {
-		signIn: '/login',
-		error: '/login',
-	},
-	session: {
-		strategy: 'jwt',
-		maxAge: 30 * 24 * 60 * 60, // 30 days
-	},
-	secret: process.env.NEXTAUTH_SECRET,
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar,
+          role: user.role,
+          cargo: user.cargo,
+          lotacao: user.lotacao,
+          status: user.status,
+          courseId: user.courseId?.toString(),
+          courseName: user.courseName,
+          city: user.city,
+          country: user.country,
+          whatsapp: user.whatsapp,
+          linkedin: user.linkedin,
+          instagram: user.instagram,
+          github: user.github,
+          twitter: user.twitter,
+          company: user.company,
+          bio: user.bio,
+          isEmailVerified: user.emailVerified,
+          profileCompleted: user.profileCompleted,
+        } satisfies SessionUser
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        for (const key of SESSION_KEYS) {
+          // @ts-expect-error — index assignment from SessionUser
+          token[key] = user[key]
+        }
+      }
+      if (trigger === 'update' && session) {
+        return { ...token, ...session }
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token) {
+        for (const key of SESSION_KEYS) {
+          // @ts-expect-error — index assignment to session.user
+          session.user[key] = token[key]
+        }
+      }
+      return session
+    },
+  },
+  pages: { signIn: '/login', error: '/login' },
+  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 },
+  secret: process.env.NEXTAUTH_SECRET,
 })
