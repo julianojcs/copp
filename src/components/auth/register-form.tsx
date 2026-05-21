@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Mail, Lock, Eye, EyeOff, User, MapPin } from 'lucide-react'
+import { Loader2, Mail, Lock, Eye, EyeOff, User, Phone, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,47 +24,25 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
-import { COUNTRIES } from '@/lib/constants'
+import { PF_CARGOS } from '@/lib/constants'
+import { CARGO_LABELS } from '@/lib/i18n'
 import { registerSchema, type RegisterFormData } from '@/lib/validations'
 
 export function RegisterForm() {
+	const router = useRouter()
 	const [isLoading, setIsLoading] = useState(false)
 	const [showPassword, setShowPassword] = useState(false)
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const [success, setSuccess] = useState(false)
-	const [courses, setCourses] = useState<{ name: string; code: string }[]>([])
-	const [isFetchingCourses, setIsFetchingCourses] = useState(true)
 
 	const {
 		register,
 		handleSubmit,
 		setValue,
-		watch,
 		formState: { errors },
 	} = useForm<RegisterFormData>({
 		resolver: zodResolver(registerSchema),
 	})
-
-	const selectedCourse = watch('courseName')
-	const selectedCountry = watch('country')
-
-	useEffect(() => {
-		const fetchCourses = async () => {
-			try {
-				const response = await fetch('/api/courses')
-				if (response.ok) {
-					const data = await response.json()
-					setCourses(data)
-				}
-			} catch (error) {
-				console.error('Failed to fetch courses:', error)
-			} finally {
-				setIsFetchingCourses(false)
-			}
-		}
-		fetchCourses()
-	}, [])
 
 	const handleFormSubmit = async (data: RegisterFormData) => {
 		setIsLoading(true)
@@ -79,55 +58,30 @@ export function RegisterForm() {
 			const result = await response.json()
 
 			if (!response.ok) {
-				// Use the detailed error message from the API
-				setError(result.error || 'Registration failed. Please check your information and try again.')
+				setError(result.error || 'Erro ao criar conta. Verifique seus dados e tente novamente.')
 				return
 			}
 
-			setSuccess(true)
+			router.push('/aguardando-aprovacao')
 		} catch (err) {
-			// Network or unexpected errors
 			if (err instanceof TypeError && err.message.includes('fetch')) {
-				setError('Unable to connect to the server. Please check your internet connection.')
+				setError('Não foi possível conectar ao servidor. Verifique sua conexão.')
 			} else {
-				setError('An unexpected error occurred. Please try again later.')
+				setError('Ocorreu um erro inesperado. Tente novamente mais tarde.')
 			}
 		} finally {
 			setIsLoading(false)
 		}
 	}
 
-	if (success) {
-		return (
-			<Card className="w-full max-w-md">
-				<CardHeader className="space-y-1">
-					<CardTitle className="text-2xl font-bold text-center text-green-600">
-						Check your email!
-					</CardTitle>
-				</CardHeader>
-				<CardContent className="text-center space-y-4">
-					<p className="text-muted-foreground">
-						We&apos;ve sent a verification link to your email address. Please
-						click the link to verify your account.
-					</p>
-					<Link href="/login">
-						<Button variant="outline" className="w-full">
-							Back to login
-						</Button>
-					</Link>
-				</CardContent>
-			</Card>
-		)
-	}
-
 	return (
 		<Card className="w-full max-w-md">
 			<CardHeader className="space-y-1">
 				<CardTitle className="text-2xl font-bold text-center">
-					Create an account
+					Criar conta
 				</CardTitle>
 				<CardDescription className="text-center">
-					Join the IBS London community
+					Cadastre-se no sistema da turma
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -141,13 +95,14 @@ export function RegisterForm() {
 				)}
 
 				<form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+					{/* Nome completo */}
 					<div className="space-y-2">
-						<Label htmlFor="name">Full Name</Label>
+						<Label htmlFor="name">Nome completo</Label>
 						<div className="relative">
 							<User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 							<Input
 								id="name"
-								placeholder="John Doe"
+								placeholder="João Silva"
 								className="pl-10"
 								disabled={isLoading}
 								{...register('name')}
@@ -158,6 +113,7 @@ export function RegisterForm() {
 						)}
 					</div>
 
+					{/* Email */}
 					<div className="space-y-2">
 						<Label htmlFor="email">Email</Label>
 						<div className="relative">
@@ -165,7 +121,7 @@ export function RegisterForm() {
 							<Input
 								id="email"
 								type="email"
-								placeholder="you@example.com"
+								placeholder="voce@pf.gov.br"
 								className="pl-10"
 								disabled={isLoading}
 								{...register('email')}
@@ -176,9 +132,10 @@ export function RegisterForm() {
 						)}
 					</div>
 
+					{/* Senha + Confirmar senha */}
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
+							<Label htmlFor="password">Senha</Label>
 							<div className="relative">
 								<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 								<Input
@@ -196,7 +153,7 @@ export function RegisterForm() {
 									className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
 									onClick={() => setShowPassword(!showPassword)}
 									tabIndex={0}
-									aria-label={showPassword ? 'Hide password' : 'Show password'}
+									aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
 								>
 									{showPassword ? (
 										<EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -213,7 +170,7 @@ export function RegisterForm() {
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="confirmPassword">Confirm</Label>
+							<Label htmlFor="confirmPassword">Confirmar</Label>
 							<div className="relative">
 								<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 								<Input
@@ -232,7 +189,7 @@ export function RegisterForm() {
 									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
 									tabIndex={0}
 									aria-label={
-										showConfirmPassword ? 'Hide password' : 'Show password'
+										showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'
 									}
 								>
 									{showConfirmPassword ? (
@@ -250,98 +207,90 @@ export function RegisterForm() {
 						</div>
 					</div>
 
+					{/* WhatsApp */}
 					<div className="space-y-2">
-						<Label htmlFor="courseName">Course Name</Label>
-						<Select
-							value={selectedCourse}
-							onValueChange={(value) => setValue('courseName', value, { shouldValidate: true })}
-							disabled={isLoading || isFetchingCourses}
-						>
-							<SelectTrigger>
-								<SelectValue placeholder={isFetchingCourses ? "Loading courses..." : "Select course"} />
-							</SelectTrigger>
-							<SelectContent>
-								{courses.length > 0 ? (
-									courses.map((course) => (
-										<SelectItem key={course.code} value={course.name} textValue={course.code}>
-											{course.name} ({course.code})
-										</SelectItem>
-									))
-								) : (
-									<SelectItem value="_empty" disabled>
-										{isFetchingCourses ? "Loading..." : "No courses available"}
-									</SelectItem>
-								)}
-							</SelectContent>
-						</Select>
-						{errors.courseName && (
-							<p className="text-sm text-destructive">
-								{errors.courseName.message}
-							</p>
+						<Label htmlFor="whatsapp">WhatsApp</Label>
+						<div className="relative">
+							<Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+							<Input
+								id="whatsapp"
+								placeholder="(11) 99999-9999"
+								className="pl-10"
+								disabled={isLoading}
+								{...register('whatsapp')}
+							/>
+						</div>
+						{errors.whatsapp && (
+							<p className="text-sm text-destructive">{errors.whatsapp.message}</p>
 						)}
 					</div>
 
-					<div className="grid grid-cols-2 gap-4">
-						<div className="space-y-2">
-							<Label htmlFor="city">City</Label>
-							<div className="relative">
-								<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-								<Input
-									id="city"
-									placeholder="São Paulo"
-									className="pl-10"
-									disabled={isLoading}
-									{...register('city')}
-								/>
-							</div>
-							{errors.city && (
-								<p className="text-sm text-destructive">{errors.city.message}</p>
-							)}
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="country">Country</Label>
-							<Select
-								value={selectedCountry}
-								onValueChange={(value) => setValue('country', value, { shouldValidate: true })}
+					{/* Lotação */}
+					<div className="space-y-2">
+						<Label htmlFor="lotacao">Lotação</Label>
+						<div className="relative">
+							<Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+							<Input
+								id="lotacao"
+								placeholder="SR/DF, ANP, DICOR..."
+								className="pl-10"
 								disabled={isLoading}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="Select country" />
-								</SelectTrigger>
-								<SelectContent>
-									{COUNTRIES.map((country) => (
-										<SelectItem key={country} value={country}>
-											{country}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-							{errors.country && (
-								<p className="text-sm text-destructive">
-									{errors.country.message}
-								</p>
-							)}
+								{...register('lotacao')}
+							/>
 						</div>
+						{errors.lotacao && (
+							<p className="text-sm text-destructive">{errors.lotacao.message}</p>
+						)}
 					</div>
 
+					{/* Cargo */}
 					<div className="space-y-2">
-						<Label htmlFor="company">Company / Current Job</Label>
+						<Label htmlFor="cargo">Cargo</Label>
+						<Select
+							onValueChange={(v) => setValue('cargo', v as keyof typeof CARGO_LABELS, { shouldValidate: true })}
+							disabled={isLoading}
+						>
+							<SelectTrigger id="cargo">
+								<SelectValue placeholder="Selecione seu cargo" />
+							</SelectTrigger>
+							<SelectContent>
+								{Object.values(PF_CARGOS).map((c) => (
+									<SelectItem key={c} value={c}>
+										{CARGO_LABELS[c]}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						{errors.cargo && (
+							<p className="text-sm text-destructive">{errors.cargo.message}</p>
+						)}
+					</div>
+
+					{/* Empresa (opcional) */}
+					<div className="space-y-2">
+						<Label htmlFor="company">
+							Empresa / Cargo atual{' '}
+							<span className="text-muted-foreground text-xs">(opcional)</span>
+						</Label>
 						<Input
 							id="company"
-							placeholder="e.g., Google, Freelancer, etc."
+							placeholder="Ex.: Polícia Federal, ANP..."
 							{...register('company')}
 							disabled={isLoading}
 						/>
 					</div>
 
+					{/* Bio (opcional) */}
 					<div className="space-y-2">
-						<Label htmlFor="bio">Mini Bio</Label>
+						<Label htmlFor="bio">
+							Mini bio{' '}
+							<span className="text-muted-foreground text-xs">(opcional)</span>
+						</Label>
 						<textarea
 							id="bio"
 							rows={3}
 							className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-							placeholder="Brief introduction..."
+							placeholder="Breve apresentação..."
 							{...register('bio')}
 							disabled={isLoading}
 						/>
@@ -356,19 +305,19 @@ export function RegisterForm() {
 						{isLoading ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Creating account...
+								Criando conta...
 							</>
 						) : (
-							'Create account'
+							'Criar conta'
 						)}
 					</Button>
 				</form>
 			</CardContent>
 			<CardFooter className="flex justify-center">
 				<p className="text-sm text-muted-foreground">
-					Already have an account?{' '}
+					Já tem uma conta?{' '}
 					<Link href="/login" className="text-primary hover:underline">
-						Sign in
+						Entrar
 					</Link>
 				</p>
 			</CardFooter>
