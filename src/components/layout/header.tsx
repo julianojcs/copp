@@ -15,8 +15,12 @@ import {
   Menu,
   Home,
   ShieldCheck,
+  LayoutDashboard,
+  type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PendingBadge } from '@/components/admin/pending-badge'
+import { USER_ROLES } from '@/lib/constants'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -54,12 +58,22 @@ export function Header() {
       .slice(0, 2)
   }
 
-  const navItems = [
+  const role = session?.user?.role
+  const isModerator =
+    role === USER_ROLES.ADMIN ||
+    role === USER_ROLES.COORDENADOR ||
+    role === USER_ROLES.INSTRUTOR
+
+  type NavItem = { href: string; label: string; icon: LucideIcon; badge?: React.ReactNode }
+  const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Início', icon: Home },
     { href: '/colleagues', label: 'Colegas', icon: Users },
     { href: '/gallery', label: 'Galeria', icon: ImageIcon },
     ...(branding.peerApprovalEnabled && session?.user?.status === 'approved'
       ? [{ href: '/aprovar-colegas', label: 'Aprovar colegas', icon: ShieldCheck }]
+      : []),
+    ...(isModerator
+      ? [{ href: '/admin/usuarios', label: 'Admin', icon: LayoutDashboard, badge: <PendingBadge /> }]
       : []),
   ]
 
@@ -95,6 +109,7 @@ export function Header() {
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
+                      {item.badge}
                     </Link>
                   ))}
                 </nav>
@@ -123,6 +138,7 @@ export function Header() {
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
+                {item.badge}
               </Link>
             ))}
           </nav>

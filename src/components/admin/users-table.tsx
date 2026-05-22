@@ -26,6 +26,8 @@ export function UsersTable({ initialParams }: { initialParams: Record<string, st
   const [total, setTotal] = useState(0)
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
+  const ALL = '__all'
+
   const status = sp.get('status') ?? initialParams.status ?? USER_STATUS.PENDING
   const role = sp.get('role') ?? ''
   const cargo = sp.get('cargo') ?? ''
@@ -47,7 +49,7 @@ export function UsersTable({ initialParams }: { initialParams: Record<string, st
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(sp.toString())
-    if (value) params.set(key, value)
+    if (value && value !== ALL) params.set(key, value)
     else params.delete(key)
     startTransition(() => router.replace(`/admin/usuarios?${params.toString()}`))
   }
@@ -101,19 +103,19 @@ export function UsersTable({ initialParams }: { initialParams: Record<string, st
             <SelectItem value="rejected">{STATUS_LABELS.rejected}</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={role} onValueChange={(v) => updateParam('role', v)}>
+        <Select value={role || ALL} onValueChange={(v) => updateParam('role', v)}>
           <SelectTrigger className="w-44"><SelectValue placeholder="Função" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas</SelectItem>
+            <SelectItem value={ALL}>Todas</SelectItem>
             {Object.values(USER_ROLES).map((r) => (
               <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select value={cargo} onValueChange={(v) => updateParam('cargo', v)}>
+        <Select value={cargo || ALL} onValueChange={(v) => updateParam('cargo', v)}>
           <SelectTrigger className="w-32"><SelectValue placeholder="Cargo" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            <SelectItem value={ALL}>Todos</SelectItem>
             {Object.values(PF_CARGOS).map((c) => (
               <SelectItem key={c} value={c}>{CARGO_SHORT_LABELS[c]}</SelectItem>
             ))}
