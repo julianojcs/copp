@@ -12,7 +12,7 @@ interface RouteParams {
 const EDITABLE_FIELDS = [
   'name', 'email', 'avatar', 'cargo', 'lotacao', 'whatsapp',
   'role', 'status', 'isActive', 'courseId', 'courseName',
-  'city', 'country', 'linkedin', 'instagram', 'github', 'twitter', 'company', 'bio',
+  'state', 'city', 'linkedin', 'instagram', 'twitter', 'bio',
 ] as const
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
@@ -72,13 +72,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     rejectedReason: u.rejectedReason,
     courseId: u.courseId?.toString(),
     courseName: u.courseName,
+    state: u.state,
     city: u.city,
-    country: u.country,
     linkedin: u.linkedin,
     instagram: u.instagram,
-    github: u.github,
     twitter: u.twitter,
-    company: u.company,
     bio: u.bio,
     createdAt: u.createdAt,
   })

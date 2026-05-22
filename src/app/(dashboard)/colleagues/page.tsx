@@ -27,9 +27,10 @@ interface IUser {
   whatsapp?: string
   linkedin?: string
   instagram?: string
-  github?: string
   twitter?: string
   bio?: string
+  state?: string
+  city?: string
   emailVerified: boolean
 }
 

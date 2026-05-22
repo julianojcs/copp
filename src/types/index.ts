@@ -18,14 +18,12 @@ export interface SessionUser {
   status: UserStatus
   courseId?: string
   courseName?: string
+  state?: string
   city?: string
-  country?: string
   whatsapp?: string
   linkedin?: string
   instagram?: string
-  github?: string
   twitter?: string
-  company?: string
   bio?: string
   isEmailVerified: boolean
   profileCompleted: boolean
@@ -45,12 +43,12 @@ export interface PublicUser {
   status: UserStatus
   courseId?: string
   courseName?: string
+  state?: string
+  city?: string
   whatsapp?: string
   linkedin?: string
   instagram?: string
-  github?: string
   twitter?: string
-  company?: string
   bio?: string
   isActive: boolean
   createdAt: Date | string

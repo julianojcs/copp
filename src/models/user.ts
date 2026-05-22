@@ -8,6 +8,7 @@ import {
   type PFCargo,
   type UserStatus,
 } from '@/lib/constants'
+import { VALID_UFS } from '@/lib/constants/brazilian-states'
 
 export interface IUser extends Document {
   _id: Types.ObjectId
@@ -29,9 +30,9 @@ export interface IUser extends Document {
   courseId?: Types.ObjectId
   courseName: string
 
-  // legacy fields kept
+  // location (IBGE)
+  state: string
   city?: string
-  country?: string
 
   // moderation
   status: UserStatus
@@ -42,10 +43,8 @@ export interface IUser extends Document {
   // optional profile
   linkedin?: string
   instagram?: string
-  github?: string
   twitter?: string
   bio?: string
-  company?: string
 
   googleId?: string
   isActive: boolean
@@ -82,8 +81,17 @@ const UserSchema = new Schema<IUser>(
     courseId: { type: Schema.Types.ObjectId, ref: 'Course' },
     courseName: { type: String, required: true },
 
-    city: { type: String },
-    country: { type: String },
+    state: {
+      type: String,
+      required: [true, 'Estado é obrigatório'],
+      uppercase: true,
+      trim: true,
+      validate: {
+        validator: (v: string) => VALID_UFS.has(v),
+        message: 'Estado (UF) inválido',
+      },
+    },
+    city: { type: String, trim: true, maxlength: 100 },
 
     status: {
       type: String,
@@ -96,10 +104,8 @@ const UserSchema = new Schema<IUser>(
 
     linkedin: { type: String },
     instagram: { type: String },
-    github: { type: String },
     twitter: { type: String },
     bio: { type: String, maxlength: 500 },
-    company: { type: String, trim: true },
 
     googleId: { type: String, unique: true, sparse: true },
 
@@ -109,12 +115,11 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true }
 )
 
-// Indices
 UserSchema.index({ courseId: 1, role: 1 })
 UserSchema.index({ status: 1 })
+UserSchema.index({ state: 1, city: 1 })
 UserSchema.index({ name: 'text', lotacao: 'text' })
 
-// Application-level invariant: cargo required if role !== 'admin'
 UserSchema.pre('validate', async function () {
   if (this.role !== USER_ROLES.ADMIN && !this.cargo) {
     this.invalidate('cargo', 'Cargo é obrigatório para esta função')

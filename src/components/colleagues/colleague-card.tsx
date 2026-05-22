@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MapPin, Linkedin, Instagram, Github, Mail, Twitter, MessageCircle } from 'lucide-react'
+import { MapPin, Linkedin, Instagram, Mail, Twitter, MessageCircle } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,9 +17,10 @@ interface IUser {
   whatsapp?: string
   linkedin?: string
   instagram?: string
-  github?: string
   twitter?: string
   bio?: string
+  state?: string
+  city?: string
 }
 
 interface ColleagueCardProps {
@@ -78,6 +79,12 @@ export function ColleagueCard({ colleague }: ColleagueCardProps) {
             <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
               <MapPin className="h-3 w-3" />
               <span>{colleague.lotacao}</span>
+            </div>
+          )}
+
+          {(colleague.city || colleague.state) && (
+            <div className="text-xs text-muted-foreground mt-1">
+              {colleague.city ? `${colleague.city}/${colleague.state || ''}` : colleague.state}
             </div>
           )}
 
@@ -183,24 +190,6 @@ export function ColleagueCard({ colleague }: ColleagueCardProps) {
               </Button>
             )}
 
-            {colleague.github && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
-                asChild
-              >
-                <a
-                  href={colleague.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Perfil no GitHub"
-                  tabIndex={0}
-                >
-                  <Github className="h-4 w-4" />
-                </a>
-              </Button>
-            )}
           </div>
         </div>
       </CardContent>

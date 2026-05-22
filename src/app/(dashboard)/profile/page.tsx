@@ -22,6 +22,9 @@ import {
 import { profileSchema, type ProfileFormData, changePasswordSchema, type ChangePasswordFormData } from '@/lib/validations'
 import { USER_ROLES, PF_CARGOS } from '@/lib/constants'
 import { ROLE_LABELS, CARGO_LABELS } from '@/lib/i18n'
+import { StateSelect } from '@/components/profile/state-select'
+import { CitySelect } from '@/components/profile/city-select'
+import { useIBGE } from '@/hooks/use-ibge'
 
 export default function ProfilePage() {
 	const { data: session, update } = useSession()
@@ -48,20 +51,32 @@ export default function ProfilePage() {
 			cargo: (session?.user?.cargo as ProfileFormData['cargo']) || undefined,
 			lotacao: session?.user?.lotacao || '',
 			whatsapp: session?.user?.whatsapp || '',
+			state: session?.user?.state || '',
 			city: session?.user?.city || '',
-			country: session?.user?.country || '',
 			linkedin: session?.user?.linkedin || '',
 			instagram: session?.user?.instagram || '',
-			github: session?.user?.github || '',
 			twitter: session?.user?.twitter || '',
-			company: session?.user?.company || '',
 			bio: session?.user?.bio || '',
 		},
 	})
 
 	const selectedRole = watch('role')
 	const selectedCargo = watch('cargo')
+	const selectedState = watch('state') || ''
+	const selectedCity = watch('city') || ''
 	const isAdmin = selectedRole === USER_ROLES.ADMIN
+
+	const { states, cities, loadingStates, loadingCities, setSelectedUF } = useIBGE(selectedState)
+
+	const handleStateChange = (uf: string) => {
+		setValue('state', uf, { shouldValidate: true })
+		setValue('city', '', { shouldValidate: false })
+		setSelectedUF(uf)
+	}
+
+	const handleCityChange = (city: string) => {
+		setValue('city', city, { shouldValidate: true })
+	}
 
 	const {
 		register: registerPassword,
@@ -102,17 +117,18 @@ export default function ProfilePage() {
 				cargo: (session.user.cargo as ProfileFormData['cargo']) || undefined,
 				lotacao: session.user.lotacao || '',
 				whatsapp: session.user.whatsapp || '',
+				state: session.user.state || '',
 				city: session.user.city || '',
-				country: session.user.country || '',
 				linkedin: session.user.linkedin || '',
 				instagram: session.user.instagram || '',
-				github: session.user.github || '',
 				twitter: session.user.twitter || '',
-				company: session.user.company || '',
 				bio: session.user.bio || '',
 			})
+			if (session.user.state) {
+				setSelectedUF(session.user.state)
+			}
 		}
-	}, [session, reset])
+	}, [session, reset, setSelectedUF])
 
 	// Check for onboarding / complete parameter
 	useEffect(() => {
@@ -195,13 +211,11 @@ export default function ProfilePage() {
 				cargo: data.cargo,
 				lotacao: data.lotacao,
 				whatsapp: data.whatsapp,
+				state: data.state,
 				city: data.city,
-				country: data.country,
 				linkedin: data.linkedin,
 				instagram: data.instagram,
-				github: data.github,
 				twitter: data.twitter,
-				company: data.company,
 				bio: data.bio,
 				profileCompleted: result.user?.profileCompleted ?? false,
 			})
@@ -443,45 +457,41 @@ export default function ProfilePage() {
 								)}
 							</div>
 
-							{/* Empresa / Cargo atual (opcional) */}
-							<div className="col-span-2 space-y-2">
-								<Label htmlFor="company">Empresa / Cargo atual</Label>
-								<Input
-									id="company"
-									placeholder="Ex: Google, Freelancer..."
-									{...register('company')}
-									disabled={isLoading}
-								/>
-							</div>
-
-							{/* Cidade (opcional) */}
+							{/* Estado */}
 							<div className="space-y-2">
-								<Label htmlFor="city">Cidade</Label>
-								<Input
-									id="city"
-									placeholder="Ex: Brasília"
-									{...register('city')}
+								<Label htmlFor="state">
+									Estado <span className="text-destructive">*</span>
+								</Label>
+								<StateSelect
+									id="state"
+									value={selectedState}
+									onValueChange={handleStateChange}
+									states={states}
+									loading={loadingStates}
 									disabled={isLoading}
 								/>
-								{errors.city && (
+								{errors.state && (
 									<p className="text-sm text-destructive">
-										{errors.city.message}
+										{errors.state.message}
 									</p>
 								)}
 							</div>
 
-							{/* País (opcional) */}
+							{/* Cidade (opcional, depende de Estado) */}
 							<div className="space-y-2">
-								<Label htmlFor="country">País</Label>
-								<Input
-									id="country"
-									placeholder="Ex: Brasil"
-									{...register('country')}
+								<Label htmlFor="city">Cidade</Label>
+								<CitySelect
+									id="city"
+									value={selectedCity}
+									onValueChange={handleCityChange}
+									cities={cities}
+									loading={loadingCities}
 									disabled={isLoading}
+									hasState={!!selectedState}
 								/>
-								{errors.country && (
+								{errors.city && (
 									<p className="text-sm text-destructive">
-										{errors.country.message}
+										{errors.city.message}
 									</p>
 								)}
 							</div>
@@ -522,22 +532,6 @@ export default function ProfilePage() {
 									{...register('twitter')}
 									disabled={isLoading}
 								/>
-							</div>
-
-							{/* GitHub */}
-							<div className="col-span-2 space-y-2">
-								<Label htmlFor="github">GitHub</Label>
-								<Input
-									id="github"
-									placeholder="https://github.com/usuario"
-									{...register('github')}
-									disabled={isLoading}
-								/>
-								{errors.github && (
-									<p className="text-sm text-destructive">
-										{errors.github.message}
-									</p>
-								)}
 							</div>
 
 							{/* Bio */}

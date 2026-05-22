@@ -1,6 +1,18 @@
 // src/lib/validations.ts
 import { z } from 'zod'
 import { USER_ROLES, PF_CARGOS } from '@/lib/constants'
+import { VALID_UFS } from '@/lib/constants/brazilian-states'
+
+export const stateSchema = z
+  .string()
+  .min(1, 'Estado é obrigatório')
+  .refine((v) => VALID_UFS.has(v.toUpperCase()), 'Estado (UF) inválido')
+
+export const citySchema = z
+  .string()
+  .max(100, 'Cidade não pode exceder 100 caracteres')
+  .optional()
+  .or(z.literal(''))
 
 /**
  * Brazilian WhatsApp number — accepts common formats:
@@ -55,9 +67,8 @@ export const registerSchema = z
     lotacao: lotacaoSchema,
     cargo: cargoSchema,
     bio: z.string().max(500, 'Bio não pode exceder 500 caracteres').optional().or(z.literal('')),
-    company: z.string().optional().or(z.literal('')),
-    city: z.string().optional().or(z.literal('')),
-    country: z.string().optional().or(z.literal('')),
+    state: stateSchema,
+    city: citySchema,
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'As senhas não conferem',
@@ -105,12 +116,10 @@ export const profileSchema = z
     whatsapp: whatsappSchema,
     linkedin: z.string().url('URL inválida').optional().or(z.literal('')),
     instagram: z.string().optional().or(z.literal('')),
-    github: z.string().url('URL inválida').optional().or(z.literal('')),
     twitter: z.string().optional().or(z.literal('')),
-    company: z.string().optional().or(z.literal('')),
     bio: z.string().max(500, 'Bio não pode exceder 500 caracteres').optional().or(z.literal('')),
-    city: z.string().optional().or(z.literal('')),
-    country: z.string().optional().or(z.literal('')),
+    state: stateSchema,
+    city: citySchema,
   })
   .refine((d) => d.role === USER_ROLES.ADMIN || !!d.cargo, {
     message: 'Cargo é obrigatório',

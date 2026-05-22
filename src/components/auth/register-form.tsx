@@ -24,6 +24,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
+import { StateSelect } from '@/components/profile/state-select'
+import { CitySelect } from '@/components/profile/city-select'
+import { useIBGE } from '@/hooks/use-ibge'
 import { PF_CARGOS } from '@/lib/constants'
 import { CARGO_LABELS } from '@/lib/i18n'
 import { registerSchema, type RegisterFormData } from '@/lib/validations'
@@ -39,10 +42,25 @@ export function RegisterForm() {
 		register,
 		handleSubmit,
 		setValue,
+		watch,
 		formState: { errors },
 	} = useForm<RegisterFormData>({
 		resolver: zodResolver(registerSchema),
 	})
+
+	const selectedState = watch('state') || ''
+	const selectedCity = watch('city') || ''
+	const { states, cities, loadingStates, loadingCities, setSelectedUF } = useIBGE()
+
+	const handleStateChange = (uf: string) => {
+		setValue('state', uf, { shouldValidate: true })
+		setValue('city', '', { shouldValidate: false })
+		setSelectedUF(uf)
+	}
+
+	const handleCityChange = (city: string) => {
+		setValue('city', city, { shouldValidate: true })
+	}
 
 	const handleFormSubmit = async (data: RegisterFormData) => {
 		setIsLoading(true)
@@ -266,18 +284,41 @@ export function RegisterForm() {
 						)}
 					</div>
 
-					{/* Empresa (opcional) */}
-					<div className="space-y-2">
-						<Label htmlFor="company">
-							Empresa / Cargo atual{' '}
-							<span className="text-muted-foreground text-xs">(opcional)</span>
-						</Label>
-						<Input
-							id="company"
-							placeholder="Ex.: Polícia Federal, ANP..."
-							{...register('company')}
-							disabled={isLoading}
-						/>
+					{/* Estado + Cidade */}
+					<div className="grid grid-cols-2 gap-4">
+						<div className="space-y-2">
+							<Label htmlFor="state">Estado</Label>
+							<StateSelect
+								id="state"
+								value={selectedState}
+								onValueChange={handleStateChange}
+								states={states}
+								loading={loadingStates}
+								disabled={isLoading}
+							/>
+							{errors.state && (
+								<p className="text-sm text-destructive">{errors.state.message}</p>
+							)}
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="city">
+								Cidade{' '}
+								<span className="text-muted-foreground text-xs">(opcional)</span>
+							</Label>
+							<CitySelect
+								id="city"
+								value={selectedCity}
+								onValueChange={handleCityChange}
+								cities={cities}
+								loading={loadingCities}
+								disabled={isLoading}
+								hasState={!!selectedState}
+							/>
+							{errors.city && (
+								<p className="text-sm text-destructive">{errors.city.message}</p>
+							)}
+						</div>
 					</div>
 
 					{/* Bio (opcional) */}

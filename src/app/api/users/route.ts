@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
 
 		const [users, total] = await Promise.all([
 			User.find(query)
-				.select('name email avatar role cargo lotacao whatsapp linkedin instagram github twitter bio company emailVerified isActive createdAt')
+				.select('name email avatar role cargo lotacao whatsapp linkedin instagram twitter bio state city emailVerified isActive createdAt')
 				.sort({ name: 1 })
 				.skip(skip)
 				.limit(limit)

@@ -2,15 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
 import { USER_ROLES, USER_STATUS } from '@/lib/constants'
+import { VALID_UFS } from '@/lib/constants/brazilian-states'
 
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json()
-		const { email, name, googleId, avatar, lotacao, whatsapp, cargo, role } = body
+		const { email, name, googleId, avatar, lotacao, whatsapp, cargo, role, state, city } = body
 
 		if (!email || !name || !googleId || !lotacao || !whatsapp) {
 			return NextResponse.json(
 				{ error: 'Os campos nome, e-mail, Google ID, lotação e WhatsApp são obrigatórios.' },
+				{ status: 400 }
+			)
+		}
+
+		if (!state || typeof state !== 'string' || !VALID_UFS.has(state.toUpperCase())) {
+			return NextResponse.json(
+				{ error: 'Estado (UF) é obrigatório e deve ser uma sigla válida.' },
 				{ status: 400 }
 			)
 		}
@@ -37,6 +45,8 @@ export async function POST(req: NextRequest) {
 			)
 		}
 
+		const trimmedCity = typeof city === 'string' ? city.trim().slice(0, 100) : ''
+
 		const user = await User.create({
 			name,
 			email: email.toLowerCase(),
@@ -47,6 +57,8 @@ export async function POST(req: NextRequest) {
 			cargo: resolvedRole !== USER_ROLES.ADMIN ? cargo : undefined,
 			role: resolvedRole,
 			status: USER_STATUS.PENDING,
+			state: state.toUpperCase(),
+			city: trimmedCity || undefined,
 			emailVerified: true,
 			isActive: true,
 			profileCompleted: true,
