@@ -5,6 +5,7 @@ const findOneUserMock = vi.fn()
 const createUserMock = vi.fn()
 const findByIdLotacaoMock = vi.fn()
 const connectDBMock = vi.fn().mockResolvedValue({})
+const notifyAdminsMock = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('@/lib/db', () => ({ connectDB: () => connectDBMock() }))
 vi.mock('@/models/user', () => ({
@@ -17,6 +18,9 @@ vi.mock('@/models/lotacao', () => ({
   Lotacao: {
     findById: (...args: unknown[]) => ({ lean: () => findByIdLotacaoMock(...args) }),
   },
+}))
+vi.mock('@/lib/admin-notifications', () => ({
+  notifyAdminsOfNewRegistration: (...a: unknown[]) => notifyAdminsMock(...a),
 }))
 
 import { POST } from '@/app/api/auth/complete-profile/route'
@@ -54,6 +58,7 @@ describe('POST /api/auth/complete-profile', () => {
     findOneUserMock.mockReset()
     createUserMock.mockReset()
     findByIdLotacaoMock.mockReset()
+    notifyAdminsMock.mockClear()
     findByIdLotacaoMock.mockResolvedValue(sampleLotacao)
   })
 
@@ -110,5 +115,26 @@ describe('POST /api/auth/complete-profile', () => {
     const res = await POST(makeRequest(validBody) as never)
     expect(res.status).toBe(409)
     expect(createUserMock).not.toHaveBeenCalled()
+    expect(notifyAdminsMock).not.toHaveBeenCalled()
+  })
+
+  it('notifies admins once after a successful complete-profile', async () => {
+    findOneUserMock.mockResolvedValue(null)
+    createUserMock.mockResolvedValue({
+      _id: { toString: () => 'u1' },
+      name: validBody.name,
+      email: validBody.email,
+      cargo: 'EPF',
+      lotacaoSigla: 'SR/PF/SP',
+    })
+    const res = await POST(makeRequest(validBody) as never)
+    expect(res.status).toBe(201)
+    expect(notifyAdminsMock).toHaveBeenCalledTimes(1)
+    expect(notifyAdminsMock).toHaveBeenCalledWith({
+      name: validBody.name,
+      email: validBody.email,
+      cargo: 'EPF',
+      lotacao: 'SR/PF/SP',
+    })
   })
 })

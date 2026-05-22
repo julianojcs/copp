@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
 import { Lotacao } from '@/models/lotacao'
+import { notifyAdminsOfNewRegistration } from '@/lib/admin-notifications'
 import { USER_ROLES, USER_STATUS } from '@/lib/constants'
 
 const OBJECT_ID_RE = /^[a-fA-F0-9]{24}$/
@@ -75,6 +76,14 @@ export async function POST(req: NextRequest) {
 			profileCompleted: true,
 			// courseName is set via admin later
 			courseName: '',
+		})
+
+		// Notifica admins de cadastro pendente — silencioso em falha
+		await notifyAdminsOfNewRegistration({
+			name: user.name,
+			email: user.email,
+			cargo: user.cargo,
+			lotacao: user.lotacaoSigla,
 		})
 
 		return NextResponse.json(

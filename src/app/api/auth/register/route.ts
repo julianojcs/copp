@@ -8,6 +8,7 @@ import { Course } from '@/models/course'
 import { Lotacao } from '@/models/lotacao'
 import { AppSettings } from '@/models/app-settings'
 import { sendWelcomePendingEmail } from '@/lib/email'
+import { notifyAdminsOfNewRegistration } from '@/lib/admin-notifications'
 import { registerSchema } from '@/lib/validations'
 import { createError, formatErrorResponse, ErrorCode } from '@/lib/errors'
 import { USER_ROLES, USER_STATUS } from '@/lib/constants'
@@ -90,6 +91,14 @@ export async function POST(req: NextRequest) {
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError)
     }
+
+    // Notifica admins de cadastro pendente — silencioso em falha
+    await notifyAdminsOfNewRegistration({
+      name: user.name,
+      email: user.email,
+      cargo: user.cargo,
+      lotacao: user.lotacaoSigla,
+    })
 
     return NextResponse.json(
       {

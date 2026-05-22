@@ -124,6 +124,54 @@ export async function sendAccountRejectedEmail(
 }
 
 /**
+ * Notifica os admins sobre um novo cadastro aguardando aprovação.
+ * Envia uma única mensagem com todos os admins em BCC para evitar expor a lista
+ * e reduzir chance de bounce em massa.
+ */
+export async function sendNewRegistrationNotificationEmail(
+  adminEmails: string[],
+  newUser: { name: string; email: string; cargo?: string; lotacao?: string }
+): Promise<void> {
+  if (adminEmails.length === 0) return
+  const settings = await getAppSettings()
+  const moderationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/admin/usuarios?status=pending`
+  const detailsRows = [
+    `<tr><td style="padding:6px 12px; color:#71717a;">Nome</td><td style="padding:6px 12px; color:#18181b;"><strong>${newUser.name}</strong></td></tr>`,
+    `<tr><td style="padding:6px 12px; color:#71717a;">Email</td><td style="padding:6px 12px; color:#18181b;">${newUser.email}</td></tr>`,
+    newUser.cargo
+      ? `<tr><td style="padding:6px 12px; color:#71717a;">Cargo</td><td style="padding:6px 12px; color:#18181b;">${newUser.cargo}</td></tr>`
+      : '',
+    newUser.lotacao
+      ? `<tr><td style="padding:6px 12px; color:#71717a;">Lotação</td><td style="padding:6px 12px; color:#18181b;">${newUser.lotacao}</td></tr>`
+      : '',
+  ].filter(Boolean).join('')
+  const html = brandedShell({
+    brandName: settings.brandName,
+    title: 'Novo cadastro aguardando aprovação',
+    bodyHtml: `
+      <p style="color:#3f3f46; line-height:1.6;">
+        Um novo cadastro acaba de chegar e está aguardando sua aprovação no painel administrativo.
+      </p>
+      <table style="border-collapse:collapse; margin:16px 0; width:100%; background:#fafafa; border-radius:8px;">
+        ${detailsRows}
+      </table>
+      <a href="${moderationUrl}" style="display:inline-block; background:#18181b; color:white; padding:12px 24px; text-decoration:none; border-radius:8px; font-weight:500;">
+        Revisar cadastros pendentes
+      </a>
+      <p style="color:#71717a; line-height:1.6; font-size:12px; margin-top:24px;">
+        Você está recebendo este e-mail porque é moderador no ${settings.brandName}.
+      </p>`,
+  })
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: process.env.EMAIL_FROM,
+    bcc: adminEmails,
+    subject: `Novo cadastro pendente — ${settings.brandName}`,
+    html,
+  })
+}
+
+/**
  * Envia link de verificação de email ao usuário
  * @param email - Endereço de email do usuário
  * @param token - Token de verificação

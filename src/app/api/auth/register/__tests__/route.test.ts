@@ -9,6 +9,7 @@ const findByIdCourseMock = vi.fn()
 const findByIdLotacaoMock = vi.fn()
 const connectDBMock = vi.fn().mockResolvedValue({})
 const sendWelcomeMock = vi.fn().mockResolvedValue(undefined)
+const notifyAdminsMock = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('@/lib/db', () => ({ connectDB: () => connectDBMock() }))
 vi.mock('@/models/user', () => ({
@@ -34,6 +35,9 @@ vi.mock('@/models/app-settings', () => ({
   AppSettings: { findOne: () => ({ lean: () => findOneSettingsMock() }) },
 }))
 vi.mock('@/lib/email', () => ({ sendWelcomePendingEmail: (...a: unknown[]) => sendWelcomeMock(...a) }))
+vi.mock('@/lib/admin-notifications', () => ({
+  notifyAdminsOfNewRegistration: (...a: unknown[]) => notifyAdminsMock(...a),
+}))
 
 import { POST } from '@/app/api/auth/register/route'
 
@@ -75,6 +79,7 @@ describe('POST /api/auth/register', () => {
     findByIdCourseMock.mockReset()
     findByIdLotacaoMock.mockReset()
     sendWelcomeMock.mockClear()
+    notifyAdminsMock.mockClear()
     findOneSettingsMock.mockResolvedValue(null)
     findOneCourseMock.mockResolvedValue({
       _id: 'course-id',
@@ -134,5 +139,32 @@ describe('POST /api/auth/register', () => {
     sendWelcomeMock.mockRejectedValueOnce(new Error('smtp down'))
     const res = await POST(makeRequest(validBody) as never)
     expect(res.status).toBe(201)
+  })
+
+  it('notifies admins once after a successful registration', async () => {
+    findOneUserMock.mockResolvedValue(null)
+    createUserMock.mockResolvedValue({
+      _id: 'id',
+      email: validBody.email,
+      name: validBody.name,
+      cargo: 'APF',
+      lotacaoSigla: 'SR/PF/DF',
+    })
+    const res = await POST(makeRequest(validBody) as never)
+    expect(res.status).toBe(201)
+    expect(notifyAdminsMock).toHaveBeenCalledTimes(1)
+    expect(notifyAdminsMock).toHaveBeenCalledWith({
+      name: validBody.name,
+      email: validBody.email,
+      cargo: 'APF',
+      lotacao: 'SR/PF/DF',
+    })
+  })
+
+  it('does not notify admins when registration fails before User.create', async () => {
+    findByIdLotacaoMock.mockResolvedValueOnce(null)
+    findOneUserMock.mockResolvedValue(null)
+    await POST(makeRequest(validBody) as never)
+    expect(notifyAdminsMock).not.toHaveBeenCalled()
   })
 })
