@@ -47,3 +47,6 @@ next-env.d.ts
 .claude/plans/
 .superpowers/
 
+# Playwright MCP — runtime console/page snapshots
+.playwright-mcp/
+
