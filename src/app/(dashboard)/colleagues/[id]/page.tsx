@@ -118,6 +118,21 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 								<span>{user.courseName}</span>
 							</div>
 
+							{user.lotacaoSigla && (
+								<div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-2">
+									<MapPin className="h-4 w-4" />
+									<span>
+										<span className="font-medium text-foreground">{user.lotacaoSigla}</span>
+										{user.lotacaoNome && (
+											<span className="text-muted-foreground"> — {user.lotacaoNome}</span>
+										)}
+										{user.lotacaoTipo && (
+											<span className="block text-xs">{user.lotacaoTipo}</span>
+										)}
+									</span>
+								</div>
+							)}
+
 							{(user.city || user.state) && (
 								<div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-6">
 									<MapPin className="h-4 w-4" />

@@ -5,6 +5,7 @@ import crypto from 'crypto'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
 import { Course } from '@/models/course'
+import { Lotacao } from '@/models/lotacao'
 import { AppSettings } from '@/models/app-settings'
 import { sendWelcomePendingEmail } from '@/lib/email'
 import { registerSchema } from '@/lib/validations'
@@ -28,10 +29,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { name, email, password, whatsapp, lotacao, cargo, bio, state, city } =
+    const { name, email, password, whatsapp, lotacaoId, cargo, bio } =
       validationResult.data
 
     await connectDB()
+
+    const lotacao = await Lotacao.findById(lotacaoId).lean()
+    if (!lotacao) {
+      return NextResponse.json(
+        { error: 'Lotação não encontrada.', code: ErrorCode.VALIDATION_FAILED },
+        { status: 400 }
+      )
+    }
 
     const existingUser = await User.findOne({ email: email.toLowerCase() })
     if (existingUser) {
@@ -57,14 +66,17 @@ export async function POST(req: NextRequest) {
       email: email.toLowerCase(),
       password: hashedPassword,
       whatsapp,
-      lotacao,
       cargo,
       role: USER_ROLES.ALUNO,                // backend forces aluno
       status: USER_STATUS.PENDING,           // requires moderator approval
       courseId: activeCourse?._id,
       courseName,
-      state: state.toUpperCase(),
-      city: city || undefined,
+      lotacaoId: lotacao._id,
+      lotacaoSigla: lotacao.sigla,
+      lotacaoNome: lotacao.nome,
+      lotacaoTipo: lotacao.tipo,
+      state: lotacao.uf,
+      city: lotacao.cidade,
       bio: bio || undefined,
       verificationToken,
       verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),

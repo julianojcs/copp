@@ -7,9 +7,12 @@ import {
   fullNameSchema,
   stateSchema,
   citySchema,
+  lotacaoIdSchema,
   changePasswordSchema,
   passwordSchema,
 } from '@/lib/validations'
+
+const VALID_ID = 'a'.repeat(24)
 
 describe('whatsappSchema', () => {
   it('accepts (11) 99999-9999', () => {
@@ -87,6 +90,21 @@ describe('passwordSchema', () => {
   })
 })
 
+describe('lotacaoIdSchema', () => {
+  it('accepts a 24-char hex id', () => {
+    expect(lotacaoIdSchema.safeParse(VALID_ID).success).toBe(true)
+  })
+  it('rejects empty', () => {
+    expect(lotacaoIdSchema.safeParse('').success).toBe(false)
+  })
+  it('rejects too short', () => {
+    expect(lotacaoIdSchema.safeParse('a'.repeat(20)).success).toBe(false)
+  })
+  it('rejects non-hex characters', () => {
+    expect(lotacaoIdSchema.safeParse('z'.repeat(24)).success).toBe(false)
+  })
+})
+
 describe('registerSchema', () => {
   const valid = {
     name: 'Joao Silva',
@@ -94,23 +112,21 @@ describe('registerSchema', () => {
     password: 'Senha123',
     confirmPassword: 'Senha123',
     whatsapp: '(61) 99999-9999',
-    lotacao: 'SR/DF',
+    lotacaoId: VALID_ID,
     cargo: 'APF',
-    state: 'DF',
-    city: 'Brasília',
   }
 
   it('accepts a valid aluno registration', () => {
     expect(registerSchema.safeParse(valid).success).toBe(true)
   })
-  it('accepts registration without city (optional)', () => {
-    expect(registerSchema.safeParse({ ...valid, city: '' }).success).toBe(true)
-  })
   it('rejects missing whatsapp', () => {
     expect(registerSchema.safeParse({ ...valid, whatsapp: '' }).success).toBe(false)
   })
-  it('rejects missing lotacao', () => {
-    expect(registerSchema.safeParse({ ...valid, lotacao: '' }).success).toBe(false)
+  it('rejects missing lotacaoId', () => {
+    expect(registerSchema.safeParse({ ...valid, lotacaoId: '' }).success).toBe(false)
+  })
+  it('rejects invalid lotacaoId format', () => {
+    expect(registerSchema.safeParse({ ...valid, lotacaoId: 'not-an-objectid' }).success).toBe(false)
   })
   it('rejects missing cargo for aluno', () => {
     expect(registerSchema.safeParse({ ...valid, cargo: undefined }).success).toBe(false)
@@ -121,12 +137,6 @@ describe('registerSchema', () => {
   it('rejects mismatched passwords', () => {
     expect(registerSchema.safeParse({ ...valid, confirmPassword: 'other' }).success).toBe(false)
   })
-  it('rejects missing state', () => {
-    expect(registerSchema.safeParse({ ...valid, state: '' }).success).toBe(false)
-  })
-  it('rejects invalid state', () => {
-    expect(registerSchema.safeParse({ ...valid, state: 'XX' }).success).toBe(false)
-  })
 })
 
 describe('profileSchema', () => {
@@ -134,20 +144,16 @@ describe('profileSchema', () => {
     name: 'Admin Coord',
     email: 'admin@pf.gov.br',
     role: 'admin',
-    lotacao: 'ANP',
+    lotacaoId: VALID_ID,
     whatsapp: '(61) 99999-9999',
-    state: 'DF',
-    city: 'Brasília',
   }
   const alunoBase = {
     name: 'Aluno X',
     email: 'aluno@pf.gov.br',
     role: 'aluno',
     cargo: 'APF',
-    lotacao: 'SR/DF',
+    lotacaoId: VALID_ID,
     whatsapp: '(61) 99999-9999',
-    state: 'DF',
-    city: 'Brasília',
   }
 
   it('does not require cargo for admin role', () => {
@@ -159,11 +165,11 @@ describe('profileSchema', () => {
   it('accepts valid aluno profile with cargo', () => {
     expect(profileSchema.safeParse(alunoBase).success).toBe(true)
   })
-  it('rejects missing state', () => {
-    expect(profileSchema.safeParse({ ...adminBase, state: '' }).success).toBe(false)
+  it('rejects missing lotacaoId', () => {
+    expect(profileSchema.safeParse({ ...adminBase, lotacaoId: '' }).success).toBe(false)
   })
-  it('rejects invalid state UF', () => {
-    expect(profileSchema.safeParse({ ...adminBase, state: 'ZZ' }).success).toBe(false)
+  it('rejects invalid lotacaoId format', () => {
+    expect(profileSchema.safeParse({ ...adminBase, lotacaoId: 'invalid' }).success).toBe(false)
   })
 })
 

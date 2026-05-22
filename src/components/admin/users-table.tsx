@@ -149,7 +149,7 @@ export function UsersTable({ initialParams }: { initialParams: Record<string, st
                 <TableCell>{u.email}</TableCell>
                 <TableCell>{ROLE_LABELS[u.role as keyof typeof ROLE_LABELS]}</TableCell>
                 <TableCell>{u.cargo ? CARGO_SHORT_LABELS[u.cargo as keyof typeof CARGO_SHORT_LABELS] : '—'}</TableCell>
-                <TableCell>{u.lotacao}</TableCell>
+                <TableCell>{u.lotacaoSigla || '—'}</TableCell>
                 <TableCell>{statusBadge(u.status)}</TableCell>
                 <TableCell><ModerationActions user={u} onChanged={fetchData} /></TableCell>
               </TableRow>
