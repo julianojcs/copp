@@ -66,9 +66,10 @@ async function testDns() {
 			console.log('   ✅ DNS resolvido com sucesso')
 			console.log(`   📍 Servidores encontrados: ${addresses.length}`)
 		}
-	} catch (error: any) {
-		console.log(`   ❌ Erro de DNS: ${error.code}`)
-		if (error.code === 'ENOTFOUND') {
+	} catch (error: unknown) {
+		const err = error as { code?: string }
+		console.log(`   ❌ Erro de DNS: ${err.code}`)
+		if (err.code === 'ENOTFOUND') {
 			console.log('   💡 Verifique se o hostname está correto')
 		}
 	}
@@ -95,10 +96,12 @@ async function testMongo() {
 		}
 
 		await mongoose.disconnect()
-	} catch (error: any) {
-		console.log(`   ❌ Erro: ${error.message}`)
+	} catch (error: unknown) {
+		const err = error as { message?: string }
+		const msg = err.message || String(error)
+		console.log(`   ❌ Erro: ${msg}`)
 
-		if (error.message.includes('whitelist')) {
+		if (msg.includes('whitelist')) {
 			console.log('\n   💡 SOLUÇÃO:')
 			console.log('   1. Acesse: https://cloud.mongodb.com')
 			console.log('   2. Vá em: Security > Network Access')
@@ -106,7 +109,7 @@ async function testMongo() {
 			console.log('   4. Adicione seu IP atual ou 0.0.0.0/0 (para todos)')
 		}
 
-		if (error.message.includes('Authentication failed')) {
+		if (msg.includes('Authentication failed')) {
 			console.log('\n   💡 SOLUÇÃO:')
 			console.log('   1. Verifique usuário e senha no MongoDB Atlas')
 			console.log('   2. Certifique-se que @ na senha está como %40')

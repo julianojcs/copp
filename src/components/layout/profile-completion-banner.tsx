@@ -17,6 +17,7 @@ export function ProfileCompletionBanner() {
 
 	// Garantir que estamos no lado do cliente
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe client-only init
 		setIsClient(true)
 
 		if (typeof window !== 'undefined') {

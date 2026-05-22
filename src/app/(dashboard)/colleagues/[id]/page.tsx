@@ -22,7 +22,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import Image from 'next/image'
 
 interface PageParams {
@@ -40,9 +39,6 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
 	return { title: user.name }
 }
-
-import { CARGO_LABELS } from '@/lib/i18n'
-import { PF_CARGOS } from '@/lib/constants'
 
 const roleColors: Record<string, string> = {
 	aluno: 'bg-blue-500/10 text-blue-500',

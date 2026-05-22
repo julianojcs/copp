@@ -35,8 +35,9 @@ async function main() {
     try {
       await db.dropCollection(name)
       console.log(`  dropped ${name}`)
-    } catch (e: any) {
-      if (e.codeName === 'NamespaceNotFound') console.log(`  ${name} not present`)
+    } catch (e: unknown) {
+      const err = e as { codeName?: string }
+      if (err.codeName === 'NamespaceNotFound') console.log(`  ${name} not present`)
       else throw e
     }
   }

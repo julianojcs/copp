@@ -219,6 +219,7 @@ export function PhotoUpload({ isOpen, onClose, onUpload }: PhotoUploadProps) {
 						</div>
 					) : (
 						<div className="relative">
+							{/* eslint-disable-next-line @next/next/no-img-element -- preview uses a transient object URL, not a static asset */}
 							<img
 								src={preview || ''}
 								alt="Preview"

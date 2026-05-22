@@ -6,17 +6,10 @@ interface MongooseCache {
 }
 
 declare global {
-	// eslint-disable-next-line no-var
 	var mongoose: MongooseCache | undefined
 }
 
-const MONGODB_URI = process.env.MONGODB_URI
-
-if (!MONGODB_URI) {
-	throw new Error(
-		'Please define the MONGODB_URI environment variable inside .env.local'
-	)
-}
+const MONGO_URI_PATTERN = /^mongodb(\+srv)?:\/\//
 
 const cached: MongooseCache = global.mongoose || { conn: null, promise: null }
 
@@ -24,10 +17,21 @@ if (!global.mongoose) {
 	global.mongoose = cached
 }
 
+function resolveMongoUri(): string {
+	const uri = process.env.MONGODB_URI
+	if (!uri || !MONGO_URI_PATTERN.test(uri)) {
+		throw new Error(
+			'MONGODB_URI ausente ou inválida — deve começar com "mongodb://" ou "mongodb+srv://"'
+		)
+	}
+	return uri
+}
+
 /**
  * Establishes a connection to MongoDB using Mongoose.
  * Uses connection caching to reuse existing connections in serverless environments.
- * @returns Promise resolving to the Mongoose instance
+ * URI validation runs lazily on first connect (not at module load) so that
+ * build-time imports do not crash when env vars are unavailable.
  */
 export async function connectDB(): Promise<typeof mongoose> {
 	if (cached.conn) {
@@ -35,13 +39,12 @@ export async function connectDB(): Promise<typeof mongoose> {
 	}
 
 	if (!cached.promise) {
+		const uri = resolveMongoUri()
 		const opts = {
 			bufferCommands: false,
 		}
 
-		cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-			return mongoose
-		})
+		cached.promise = mongoose.connect(uri, opts).then((m) => m)
 	}
 
 	try {

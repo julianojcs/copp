@@ -3,7 +3,7 @@ import crypto from 'crypto'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
 import { sendVerificationEmail } from '@/lib/email'
-import { createError, formatErrorResponse, ErrorCode } from '@/lib/errors'
+import { formatErrorResponse, ErrorCode } from '@/lib/errors'
 
 export async function POST(req: NextRequest) {
 	try {

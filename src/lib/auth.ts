@@ -11,6 +11,7 @@ declare module 'next-auth' {
   interface Session {
     user: SessionUser
   }
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- required by next-auth module augmentation
   interface User extends SessionUser {}
 }
 

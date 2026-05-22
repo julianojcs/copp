@@ -33,6 +33,7 @@ export function PendingList() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch + state set on mount
     fetchData()
   }, [])
 

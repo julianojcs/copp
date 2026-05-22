@@ -51,4 +51,20 @@ describe('getAppSettings', () => {
     expect(result.brandName).toBe('B')
     expect(findOneMock).toHaveBeenCalledTimes(2)
   })
+
+  it('falls back to defaults when the DB query throws', async () => {
+    findOneMock.mockRejectedValueOnce(new Error('cluster down'))
+    const result = await getAppSettings()
+    expect(result.brandName).toBe(DEFAULT_APP_SETTINGS.brandName)
+  })
+
+  it('uses a short TTL on fallback so a recovered DB is picked up quickly', async () => {
+    findOneMock.mockRejectedValueOnce(new Error('cluster down'))
+    await getAppSettings()
+    // The fallback path caches with a short TTL (5s); the previous DB call counts as 1.
+    findOneMock.mockResolvedValueOnce({ brandName: 'Recovered' })
+    invalidateAppSettingsCache()
+    const result = await getAppSettings()
+    expect(result.brandName).toBe('Recovered')
+  })
 })

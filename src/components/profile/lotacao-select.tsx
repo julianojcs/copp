@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog'
@@ -147,6 +148,9 @@ export function LotacaoSelect({
 				<DialogContent className="sm:max-w-140 max-h-[80vh] flex flex-col">
 					<DialogHeader>
 						<DialogTitle>Selecionar lotação</DialogTitle>
+						<DialogDescription>
+							Busque pela sigla, nome, UF ou cidade da unidade da Polícia Federal.
+						</DialogDescription>
 					</DialogHeader>
 
 					<div className="relative">

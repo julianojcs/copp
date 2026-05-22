@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Users, Image, MapPin } from 'lucide-react'
+import { ArrowRight, Users, Image as ImageIcon, MapPin } from 'lucide-react'
 import { getAppSettings } from '@/lib/app-settings'
 
 export default async function HomePage() {
@@ -64,7 +64,7 @@ export default async function HomePage() {
             </div>
             <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm">
               <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                <Image className="h-6 w-6 text-cyan-400" />
+                <ImageIcon className="h-6 w-6 text-cyan-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">Compartilhe momentos</h3>
               <p className="text-slate-400">

@@ -42,7 +42,8 @@ export function UsersTable({ initialParams }: { initialParams: Record<string, st
 
   useEffect(() => {
     fetchData()
-  }, [status, role, cargo, q]) // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, role, cargo, q])
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(sp.toString())

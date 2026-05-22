@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
 		const { token, ...passwordData } = body
 
 		if (!token) {
-			const error = createError.invalidToken()
 			return NextResponse.json(
 				{ error: 'Reset token is required', code: ErrorCode.VALIDATION_REQUIRED_FIELD },
 				{ status: 400 }

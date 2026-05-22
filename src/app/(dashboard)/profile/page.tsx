@@ -198,23 +198,29 @@ export default function ProfilePage() {
 				throw new Error(result.error || 'Erro ao atualizar perfil')
 			}
 
+			const isAdminRole = data.role === USER_ROLES.ADMIN
+			const profileCompleted =
+				Boolean(data.whatsapp) &&
+				Boolean(data.lotacaoId) &&
+				(isAdminRole || Boolean(data.cargo))
+
 			await update({
 				name: data.name,
 				email: data.email,
 				role: data.role,
 				cargo: data.cargo,
 				whatsapp: data.whatsapp,
-				lotacaoId: result.user?.lotacaoId,
-				lotacaoSigla: result.user?.lotacaoSigla,
-				lotacaoNome: result.user?.lotacaoNome,
-				lotacaoTipo: result.user?.lotacaoTipo,
-				state: result.user?.state,
-				city: result.user?.city,
+				lotacaoId: data.lotacaoId,
+				lotacaoSigla: selectedLotacao?.sigla,
+				lotacaoNome: selectedLotacao?.nome,
+				lotacaoTipo: selectedLotacao?.tipo,
+				state: selectedLotacao?.uf,
+				city: selectedLotacao?.cidade,
 				linkedin: data.linkedin,
 				instagram: data.instagram,
 				twitter: data.twitter,
 				bio: data.bio,
-				profileCompleted: result.user?.profileCompleted ?? false,
+				profileCompleted,
 			})
 
 			toast.success('Perfil atualizado com sucesso!')
@@ -244,7 +250,7 @@ export default function ProfilePage() {
 			</div>
 
 			{/* Banner de boas-vindas / completar perfil */}
-			{showOnboardingBanner && (
+			{showOnboardingBanner && !session?.user?.profileCompleted && (
 				<div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-6 text-white relative">
 					<button
 						onClick={() => setShowOnboardingBanner(false)}
