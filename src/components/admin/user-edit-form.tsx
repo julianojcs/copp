@@ -11,17 +11,16 @@ import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { StateSelect } from '@/components/profile/state-select'
-import { CitySelect } from '@/components/profile/city-select'
-import { useIBGE } from '@/hooks/use-ibge'
+import { LotacaoSelect, type LotacaoOption } from '@/components/profile/lotacao-select'
 import { USER_ROLES, USER_STATUS, PF_CARGOS } from '@/lib/constants'
 import { ROLE_LABELS, CARGO_LABELS, STATUS_LABELS } from '@/lib/i18n'
 import { toast } from 'sonner'
 
 interface UserData {
-  id: string; name: string; email: string; role: string; cargo?: string; lotacao: string;
+  id: string; name: string; email: string; role: string; cargo?: string;
   whatsapp: string; status: string; isActive: boolean; bio?: string;
   linkedin?: string; instagram?: string; twitter?: string;
+  lotacaoId?: string; lotacaoSigla?: string; lotacaoNome?: string; lotacaoTipo?: string;
   state?: string; city?: string; courseName?: string;
 }
 
@@ -30,24 +29,31 @@ export function UserEditForm({ userId }: { userId: string }) {
   const { data: session } = useSession()
   const [user, setUser] = useState<UserData | null>(null)
   const [saving, setSaving] = useState(false)
-  const { states, cities, loadingStates, loadingCities, setSelectedUF } = useIBGE()
 
   useEffect(() => {
     fetch(`/api/admin/users/${userId}`)
       .then((r) => r.json())
-      .then((data: UserData) => {
-        setUser(data)
-        if (data.state) setSelectedUF(data.state)
-      })
-  }, [userId, setSelectedUF])
+      .then((data: UserData) => setUser(data))
+  }, [userId])
 
   if (!user) return <p>Carregando...</p>
 
   const actorIsAdmin = session?.user?.role === USER_ROLES.ADMIN
 
-  const handleStateChange = (uf: string) => {
-    setUser({ ...user, state: uf, city: undefined })
-    setSelectedUF(uf)
+  const handleLotacaoChange = (option: LotacaoOption | null) => {
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            lotacaoId: option?.id,
+            lotacaoSigla: option?.sigla,
+            lotacaoNome: option?.nome,
+            lotacaoTipo: option?.tipo,
+            state: option?.uf,
+            city: option?.cidade,
+          }
+        : prev,
+    )
   }
 
   const save = async (patch: Partial<UserData>) => {
@@ -73,10 +79,10 @@ export function UserEditForm({ userId }: { userId: string }) {
         e.preventDefault()
         save({
           name: user.name, email: user.email, role: user.role, cargo: user.cargo,
-          lotacao: user.lotacao, whatsapp: user.whatsapp, status: user.status,
+          whatsapp: user.whatsapp, status: user.status,
           isActive: user.isActive, bio: user.bio,
           linkedin: user.linkedin, instagram: user.instagram, twitter: user.twitter,
-          state: user.state, city: user.city,
+          lotacaoId: user.lotacaoId,
         })
       }}
       className="space-y-4 max-w-2xl"
@@ -93,10 +99,6 @@ export function UserEditForm({ userId }: { userId: string }) {
         <div>
           <Label>WhatsApp</Label>
           <Input value={user.whatsapp} onChange={(e) => setUser({ ...user, whatsapp: e.target.value })} />
-        </div>
-        <div>
-          <Label>Lotação</Label>
-          <Input value={user.lotacao} onChange={(e) => setUser({ ...user, lotacao: e.target.value })} />
         </div>
         <div>
           <Label>Função</Label>
@@ -149,25 +151,22 @@ export function UserEditForm({ userId }: { userId: string }) {
           />
           <Label>Ativo</Label>
         </div>
-        <div>
-          <Label>Estado</Label>
-          <StateSelect
-            value={user.state || ''}
-            onValueChange={handleStateChange}
-            states={states}
-            loading={loadingStates}
+        <div className="col-span-2">
+          <Label>Lotação</Label>
+          <LotacaoSelect
+            value={user.lotacaoId || null}
+            onChange={handleLotacaoChange}
           />
         </div>
-        <div>
-          <Label>Cidade</Label>
-          <CitySelect
-            value={user.city || ''}
-            onValueChange={(v) => setUser({ ...user, city: v })}
-            cities={cities}
-            loading={loadingCities}
-            hasState={!!user.state}
-          />
-        </div>
+        {(user.state || user.city) && (
+          <div className="col-span-2 text-xs text-muted-foreground">
+            Localização derivada:{' '}
+            <span className="font-medium text-foreground">
+              {user.city ? `${user.city}/${user.state || ''}` : user.state}
+            </span>
+            {user.lotacaoTipo && <span className="ml-2">· {user.lotacaoTipo}</span>}
+          </div>
+        )}
         <div className="col-span-2">
           <Label>Bio</Label>
           <Textarea

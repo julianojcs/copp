@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Mail, Lock, Eye, EyeOff, User, Phone, Building2 } from 'lucide-react'
+import { Loader2, Mail, Lock, Eye, EyeOff, User, Phone, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,9 +24,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
-import { StateSelect } from '@/components/profile/state-select'
-import { CitySelect } from '@/components/profile/city-select'
-import { useIBGE } from '@/hooks/use-ibge'
+import { LotacaoSelect, type LotacaoOption } from '@/components/profile/lotacao-select'
 import { PF_CARGOS } from '@/lib/constants'
 import { CARGO_LABELS } from '@/lib/i18n'
 import { registerSchema, type RegisterFormData } from '@/lib/validations'
@@ -37,6 +35,7 @@ export function RegisterForm() {
 	const [showPassword, setShowPassword] = useState(false)
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [selectedLotacao, setSelectedLotacao] = useState<LotacaoOption | null>(null)
 
 	const {
 		register,
@@ -48,18 +47,11 @@ export function RegisterForm() {
 		resolver: zodResolver(registerSchema),
 	})
 
-	const selectedState = watch('state') || ''
-	const selectedCity = watch('city') || ''
-	const { states, cities, loadingStates, loadingCities, setSelectedUF } = useIBGE()
+	const lotacaoId = watch('lotacaoId')
 
-	const handleStateChange = (uf: string) => {
-		setValue('state', uf, { shouldValidate: true })
-		setValue('city', '', { shouldValidate: false })
-		setSelectedUF(uf)
-	}
-
-	const handleCityChange = (city: string) => {
-		setValue('city', city, { shouldValidate: true })
+	const handleLotacaoChange = (option: LotacaoOption | null) => {
+		setSelectedLotacao(option)
+		setValue('lotacaoId', option?.id ?? '', { shouldValidate: true })
 	}
 
 	const handleFormSubmit = async (data: RegisterFormData) => {
@@ -245,19 +237,16 @@ export function RegisterForm() {
 
 					{/* Lotação */}
 					<div className="space-y-2">
-						<Label htmlFor="lotacao">Lotação</Label>
-						<div className="relative">
-							<Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-							<Input
-								id="lotacao"
-								placeholder="SR/DF, ANP, DICOR..."
-								className="pl-10"
-								disabled={isLoading}
-								{...register('lotacao')}
-							/>
-						</div>
-						{errors.lotacao && (
-							<p className="text-sm text-destructive">{errors.lotacao.message}</p>
+						<Label htmlFor="lotacaoId">Lotação</Label>
+						<input type="hidden" {...register('lotacaoId')} value={lotacaoId || ''} readOnly />
+						<LotacaoSelect
+							id="lotacaoId"
+							value={lotacaoId || null}
+							onChange={handleLotacaoChange}
+							disabled={isLoading}
+						/>
+						{errors.lotacaoId && (
+							<p className="text-sm text-destructive">{errors.lotacaoId.message}</p>
 						)}
 					</div>
 
@@ -284,42 +273,21 @@ export function RegisterForm() {
 						)}
 					</div>
 
-					{/* Estado + Cidade */}
-					<div className="grid grid-cols-2 gap-4">
-						<div className="space-y-2">
-							<Label htmlFor="state">Estado</Label>
-							<StateSelect
-								id="state"
-								value={selectedState}
-								onValueChange={handleStateChange}
-								states={states}
-								loading={loadingStates}
-								disabled={isLoading}
-							/>
-							{errors.state && (
-								<p className="text-sm text-destructive">{errors.state.message}</p>
-							)}
+					{/* Localização derivada (read-only) */}
+					{selectedLotacao && (
+						<div
+							className="flex items-start gap-2 rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 p-3 text-sm"
+							aria-live="polite"
+						>
+							<MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+							<div className="text-muted-foreground">
+								Localização derivada da lotação:{' '}
+								<span className="font-medium text-foreground">
+									{selectedLotacao.cidade}/{selectedLotacao.uf}
+								</span>
+							</div>
 						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="city">
-								Cidade{' '}
-								<span className="text-muted-foreground text-xs">(opcional)</span>
-							</Label>
-							<CitySelect
-								id="city"
-								value={selectedCity}
-								onValueChange={handleCityChange}
-								cities={cities}
-								loading={loadingCities}
-								disabled={isLoading}
-								hasState={!!selectedState}
-							/>
-							{errors.city && (
-								<p className="text-sm text-destructive">{errors.city.message}</p>
-							)}
-						</div>
-					</div>
+					)}
 
 					{/* Bio (opcional) */}
 					<div className="space-y-2">

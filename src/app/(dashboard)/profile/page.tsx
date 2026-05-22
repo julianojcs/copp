@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Camera, Save, CheckCircle2, AlertCircle, Sparkles, X } from 'lucide-react'
+import { Loader2, Camera, Save, CheckCircle2, AlertCircle, Sparkles, X, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -22,9 +22,7 @@ import {
 import { profileSchema, type ProfileFormData, changePasswordSchema, type ChangePasswordFormData } from '@/lib/validations'
 import { USER_ROLES, PF_CARGOS } from '@/lib/constants'
 import { ROLE_LABELS, CARGO_LABELS } from '@/lib/i18n'
-import { StateSelect } from '@/components/profile/state-select'
-import { CitySelect } from '@/components/profile/city-select'
-import { useIBGE } from '@/hooks/use-ibge'
+import { LotacaoSelect, type LotacaoOption } from '@/components/profile/lotacao-select'
 
 export default function ProfilePage() {
 	const { data: session, update } = useSession()
@@ -32,6 +30,7 @@ export default function ProfilePage() {
 	const [isUploading, setIsUploading] = useState(false)
 	const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 	const [showOnboardingBanner, setShowOnboardingBanner] = useState(false)
+	const [selectedLotacao, setSelectedLotacao] = useState<LotacaoOption | null>(null)
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const searchParams = useSearchParams()
 
@@ -49,10 +48,8 @@ export default function ProfilePage() {
 			email: session?.user?.email || '',
 			role: (session?.user?.role as ProfileFormData['role']) || USER_ROLES.ALUNO,
 			cargo: (session?.user?.cargo as ProfileFormData['cargo']) || undefined,
-			lotacao: session?.user?.lotacao || '',
+			lotacaoId: session?.user?.lotacaoId || '',
 			whatsapp: session?.user?.whatsapp || '',
-			state: session?.user?.state || '',
-			city: session?.user?.city || '',
 			linkedin: session?.user?.linkedin || '',
 			instagram: session?.user?.instagram || '',
 			twitter: session?.user?.twitter || '',
@@ -62,20 +59,12 @@ export default function ProfilePage() {
 
 	const selectedRole = watch('role')
 	const selectedCargo = watch('cargo')
-	const selectedState = watch('state') || ''
-	const selectedCity = watch('city') || ''
+	const lotacaoId = watch('lotacaoId') || ''
 	const isAdmin = selectedRole === USER_ROLES.ADMIN
 
-	const { states, cities, loadingStates, loadingCities, setSelectedUF } = useIBGE(selectedState)
-
-	const handleStateChange = (uf: string) => {
-		setValue('state', uf, { shouldValidate: true })
-		setValue('city', '', { shouldValidate: false })
-		setSelectedUF(uf)
-	}
-
-	const handleCityChange = (city: string) => {
-		setValue('city', city, { shouldValidate: true })
+	const handleLotacaoChange = (option: LotacaoOption | null) => {
+		setSelectedLotacao(option)
+		setValue('lotacaoId', option?.id ?? '', { shouldValidate: true })
 	}
 
 	const {
@@ -115,20 +104,25 @@ export default function ProfilePage() {
 				email: session.user.email || '',
 				role: (session.user.role as ProfileFormData['role']) || USER_ROLES.ALUNO,
 				cargo: (session.user.cargo as ProfileFormData['cargo']) || undefined,
-				lotacao: session.user.lotacao || '',
+				lotacaoId: session.user.lotacaoId || '',
 				whatsapp: session.user.whatsapp || '',
-				state: session.user.state || '',
-				city: session.user.city || '',
 				linkedin: session.user.linkedin || '',
 				instagram: session.user.instagram || '',
 				twitter: session.user.twitter || '',
 				bio: session.user.bio || '',
 			})
-			if (session.user.state) {
-				setSelectedUF(session.user.state)
+			if (session.user.lotacaoId && session.user.lotacaoSigla) {
+				setSelectedLotacao({
+					id: session.user.lotacaoId,
+					sigla: session.user.lotacaoSigla,
+					nome: session.user.lotacaoNome || '',
+					tipo: session.user.lotacaoTipo || '',
+					uf: session.user.state || '',
+					cidade: session.user.city || '',
+				})
 			}
 		}
-	}, [session, reset, setSelectedUF])
+	}, [session, reset])
 
 	// Check for onboarding / complete parameter
 	useEffect(() => {
@@ -209,10 +203,13 @@ export default function ProfilePage() {
 				email: data.email,
 				role: data.role,
 				cargo: data.cargo,
-				lotacao: data.lotacao,
 				whatsapp: data.whatsapp,
-				state: data.state,
-				city: data.city,
+				lotacaoId: result.user?.lotacaoId,
+				lotacaoSigla: result.user?.lotacaoSigla,
+				lotacaoNome: result.user?.lotacaoNome,
+				lotacaoTipo: result.user?.lotacaoTipo,
+				state: result.user?.state,
+				city: result.user?.city,
 				linkedin: data.linkedin,
 				instagram: data.instagram,
 				twitter: data.twitter,
@@ -257,7 +254,7 @@ export default function ProfilePage() {
 						<X className="h-5 w-5" />
 					</button>
 					<div className="flex items-start gap-4">
-						<div className="flex-shrink-0 p-2 bg-white/20 rounded-full">
+						<div className="shrink-0 p-2 bg-white/20 rounded-full">
 							<Sparkles className="h-8 w-8" />
 						</div>
 						<div>
@@ -423,21 +420,38 @@ export default function ProfilePage() {
 
 							{/* Lotação */}
 							<div className="col-span-2 space-y-2">
-								<Label htmlFor="lotacao">
+								<Label htmlFor="lotacaoId">
 									Lotação <span className="text-destructive">*</span>
 								</Label>
-								<Input
-									id="lotacao"
-									placeholder="Ex: SR/DPF/DF, DELEPAC, ANP"
-									{...register('lotacao')}
+								<input type="hidden" {...register('lotacaoId')} value={lotacaoId} readOnly />
+								<LotacaoSelect
+									id="lotacaoId"
+									value={lotacaoId || null}
+									onChange={handleLotacaoChange}
 									disabled={isLoading}
 								/>
-								{errors.lotacao && (
+								{errors.lotacaoId && (
 									<p className="text-sm text-destructive">
-										{errors.lotacao.message}
+										{errors.lotacaoId.message}
 									</p>
 								)}
 							</div>
+
+							{/* Localização derivada (read-only) */}
+							{selectedLotacao && (
+								<div className="col-span-2 flex items-start gap-2 rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 p-3 text-sm">
+									<MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+									<div className="text-muted-foreground">
+										Localização derivada da lotação:{' '}
+										<span className="font-medium text-foreground">
+											{selectedLotacao.cidade}/{selectedLotacao.uf}
+										</span>
+										{selectedLotacao.tipo && (
+											<span className="block text-xs">{selectedLotacao.tipo}</span>
+										)}
+									</div>
+								</div>
+							)}
 
 							{/* WhatsApp */}
 							<div className="col-span-2 space-y-2">
@@ -453,45 +467,6 @@ export default function ProfilePage() {
 								{errors.whatsapp && (
 									<p className="text-sm text-destructive">
 										{errors.whatsapp.message}
-									</p>
-								)}
-							</div>
-
-							{/* Estado */}
-							<div className="space-y-2">
-								<Label htmlFor="state">
-									Estado <span className="text-destructive">*</span>
-								</Label>
-								<StateSelect
-									id="state"
-									value={selectedState}
-									onValueChange={handleStateChange}
-									states={states}
-									loading={loadingStates}
-									disabled={isLoading}
-								/>
-								{errors.state && (
-									<p className="text-sm text-destructive">
-										{errors.state.message}
-									</p>
-								)}
-							</div>
-
-							{/* Cidade (opcional, depende de Estado) */}
-							<div className="space-y-2">
-								<Label htmlFor="city">Cidade</Label>
-								<CitySelect
-									id="city"
-									value={selectedCity}
-									onValueChange={handleCityChange}
-									cities={cities}
-									loading={loadingCities}
-									disabled={isLoading}
-									hasState={!!selectedState}
-								/>
-								{errors.city && (
-									<p className="text-sm text-destructive">
-										{errors.city.message}
 									</p>
 								)}
 							</div>

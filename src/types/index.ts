@@ -1,6 +1,7 @@
 // src/types/index.ts
 import type { Types } from 'mongoose'
 import type { UserRole, PFCargo, UserStatus } from '@/lib/constants'
+import type { LotacaoTipo } from '@/models/lotacao'
 
 /**
  * Shape of the user data attached to the session.
@@ -14,10 +15,13 @@ export interface SessionUser {
   avatar?: string
   role: UserRole
   cargo?: PFCargo
-  lotacao?: string
   status: UserStatus
   courseId?: string
   courseName?: string
+  lotacaoId?: string
+  lotacaoSigla?: string
+  lotacaoNome?: string
+  lotacaoTipo?: LotacaoTipo
   state?: string
   city?: string
   whatsapp?: string
@@ -39,10 +43,13 @@ export interface PublicUser {
   avatar?: string
   role: UserRole
   cargo?: PFCargo
-  lotacao?: string
   status: UserStatus
   courseId?: string
   courseName?: string
+  lotacaoId?: string
+  lotacaoSigla?: string
+  lotacaoNome?: string
+  lotacaoTipo?: LotacaoTipo
   state?: string
   city?: string
   whatsapp?: string

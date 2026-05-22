@@ -20,7 +20,7 @@ async function getStats() {
 		User.countDocuments({ isActive: true, status: 'approved' }),
 		Photo.countDocuments({ isPublic: true }),
 		User.find({ isActive: true, status: 'approved' })
-			.select('name avatar role cargo lotacao')
+			.select('name avatar role cargo lotacaoSigla')
 			.sort({ createdAt: -1 })
 			.limit(5)
 			.lean(),

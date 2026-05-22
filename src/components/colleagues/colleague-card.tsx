@@ -13,7 +13,8 @@ interface IUser {
   avatar?: string
   role: string
   cargo?: string
-  lotacao?: string
+  lotacaoSigla?: string
+  lotacaoNome?: string
   whatsapp?: string
   linkedin?: string
   instagram?: string
@@ -75,10 +76,13 @@ export function ColleagueCard({ colleague }: ColleagueCardProps) {
             </Badge>
           )}
 
-          {colleague.lotacao && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
+          {colleague.lotacaoSigla && (
+            <div
+              className="flex items-center gap-1 text-sm text-muted-foreground mt-2"
+              title={colleague.lotacaoNome}
+            >
               <MapPin className="h-3 w-3" />
-              <span>{colleague.lotacao}</span>
+              <span>{colleague.lotacaoSigla}</span>
             </div>
           )}
 

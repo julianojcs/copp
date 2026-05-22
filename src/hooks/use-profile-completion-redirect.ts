@@ -20,7 +20,7 @@ export function useProfileCompletionRedirect() {
 
     const missingBasics =
       !u.whatsapp ||
-      !u.lotacao ||
+      !u.lotacaoId ||
       (u.role !== 'admin' && !u.cargo)
 
     if (missingBasics) router.push('/profile?complete=1')

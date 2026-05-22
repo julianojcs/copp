@@ -13,7 +13,8 @@ interface Pending {
   name: string
   email: string
   cargo?: string
-  lotacao: string
+  lotacaoSigla?: string
+  lotacaoNome?: string
   createdAt: string
 }
 
@@ -76,7 +77,7 @@ export function PendingList() {
                   ? CARGO_SHORT_LABELS[u.cargo as keyof typeof CARGO_SHORT_LABELS]
                   : '—'}
               </TableCell>
-              <TableCell>{u.lotacao}</TableCell>
+              <TableCell>{u.lotacaoSigla || '—'}</TableCell>
               <TableCell>
                 <Button size="sm" onClick={() => approve(u.id)}>
                   Aprovar

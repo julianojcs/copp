@@ -18,9 +18,10 @@ export async function GET(req: NextRequest) {
 
 		const { searchParams } = new URL(req.url)
 		const search = searchParams.get('search') || ''
-		const lotacao = searchParams.get('lotacao') || ''
+		const lotacaoSigla = searchParams.get('lotacaoSigla') || ''
 		const cargo = searchParams.get('cargo') || ''
 		const role = searchParams.get('role') || ''
+		const uf = searchParams.get('uf') || ''
 		const page = parseInt(searchParams.get('page') || '1')
 		const limit = parseInt(searchParams.get('limit') || '12')
 
@@ -34,8 +35,8 @@ export async function GET(req: NextRequest) {
 			query.$text = { $search: search }
 		}
 
-		if (lotacao) {
-			query.lotacao = { $regex: lotacao, $options: 'i' }
+		if (lotacaoSigla) {
+			query.lotacaoSigla = { $regex: lotacaoSigla, $options: 'i' }
 		}
 
 		if (cargo) {
@@ -46,11 +47,19 @@ export async function GET(req: NextRequest) {
 			query.role = role
 		}
 
+		if (uf) {
+			query.state = uf.toUpperCase()
+		}
+
 		const skip = (page - 1) * limit
 
 		const [users, total] = await Promise.all([
 			User.find(query)
-				.select('name email avatar role cargo lotacao whatsapp linkedin instagram twitter bio state city emailVerified isActive createdAt')
+				.select(
+					'name email avatar role cargo whatsapp linkedin instagram twitter bio ' +
+					'lotacaoId lotacaoSigla lotacaoNome lotacaoTipo state city ' +
+					'emailVerified isActive createdAt'
+				)
 				.sort({ name: 1 })
 				.skip(skip)
 				.limit(limit)

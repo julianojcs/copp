@@ -1,24 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
+import { Lotacao } from '@/models/lotacao'
 import { USER_ROLES, USER_STATUS } from '@/lib/constants'
-import { VALID_UFS } from '@/lib/constants/brazilian-states'
+
+const OBJECT_ID_RE = /^[a-fA-F0-9]{24}$/
 
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json()
-		const { email, name, googleId, avatar, lotacao, whatsapp, cargo, role, state, city } = body
+		const { email, name, googleId, avatar, lotacaoId, whatsapp, cargo, role } = body
 
-		if (!email || !name || !googleId || !lotacao || !whatsapp) {
+		if (!email || !name || !googleId || !whatsapp) {
 			return NextResponse.json(
-				{ error: 'Os campos nome, e-mail, Google ID, lotação e WhatsApp são obrigatórios.' },
+				{ error: 'Os campos nome, e-mail, Google ID e WhatsApp são obrigatórios.' },
 				{ status: 400 }
 			)
 		}
 
-		if (!state || typeof state !== 'string' || !VALID_UFS.has(state.toUpperCase())) {
+		if (!lotacaoId || typeof lotacaoId !== 'string' || !OBJECT_ID_RE.test(lotacaoId)) {
 			return NextResponse.json(
-				{ error: 'Estado (UF) é obrigatório e deve ser uma sigla válida.' },
+				{ error: 'Lotação é obrigatória e deve ser um identificador válido.' },
 				{ status: 400 }
 			)
 		}
@@ -34,6 +36,14 @@ export async function POST(req: NextRequest) {
 
 		await connectDB()
 
+		const lotacao = await Lotacao.findById(lotacaoId).lean()
+		if (!lotacao) {
+			return NextResponse.json(
+				{ error: 'Lotação não encontrada.' },
+				{ status: 400 }
+			)
+		}
+
 		const existingUser = await User.findOne({
 			$or: [{ email: email.toLowerCase() }, { googleId }],
 		})
@@ -45,24 +55,25 @@ export async function POST(req: NextRequest) {
 			)
 		}
 
-		const trimmedCity = typeof city === 'string' ? city.trim().slice(0, 100) : ''
-
 		const user = await User.create({
 			name,
 			email: email.toLowerCase(),
 			googleId,
 			avatar,
-			lotacao,
 			whatsapp,
 			cargo: resolvedRole !== USER_ROLES.ADMIN ? cargo : undefined,
 			role: resolvedRole,
 			status: USER_STATUS.PENDING,
-			state: state.toUpperCase(),
-			city: trimmedCity || undefined,
+			lotacaoId: lotacao._id,
+			lotacaoSigla: lotacao.sigla,
+			lotacaoNome: lotacao.nome,
+			lotacaoTipo: lotacao.tipo,
+			state: lotacao.uf,
+			city: lotacao.cidade,
 			emailVerified: true,
 			isActive: true,
 			profileCompleted: true,
-			// lotacao is required in schema — courseName is set via admin later
+			// courseName is set via admin later
 			courseName: '',
 		})
 
