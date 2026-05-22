@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { name, email, password, whatsapp, lotacao, cargo, bio, company, city, country } =
+    const { name, email, password, whatsapp, lotacao, cargo, bio, state, city } =
       validationResult.data
 
     await connectDB()
@@ -63,10 +63,9 @@ export async function POST(req: NextRequest) {
       status: USER_STATUS.PENDING,           // requires moderator approval
       courseId: activeCourse?._id,
       courseName,
+      state: state.toUpperCase(),
       city: city || undefined,
-      country: country || undefined,
       bio: bio || undefined,
-      company: company || undefined,
       verificationToken,
       verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       emailVerified: true,                   // email verification is disabled in this app

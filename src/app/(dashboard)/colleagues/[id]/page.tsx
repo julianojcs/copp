@@ -3,11 +3,9 @@ import Link from 'next/link'
 import { Metadata } from 'next'
 import {
 	MapPin,
-	Phone,
 	Mail,
 	Linkedin,
 	Instagram,
-	Github,
 	ArrowLeft,
 	GraduationCap,
 	CheckCircle2,
@@ -15,6 +13,7 @@ import {
 	Twitter,
 	MessageCircle,
 } from 'lucide-react'
+import { getStateName } from '@/lib/constants/brazilian-states'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
@@ -119,12 +118,14 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 								<span>{user.courseName}</span>
 							</div>
 
-							<div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-6">
-								<MapPin className="h-4 w-4" />
-								<span>
-									{user.city}, {user.country}
-								</span>
-							</div>
+							{(user.city || user.state) && (
+								<div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-6">
+									<MapPin className="h-4 w-4" />
+									<span>
+										{user.city ? `${user.city} — ${getStateName(user.state || '') || user.state || ''}` : getStateName(user.state || '') || user.state || ''}
+									</span>
+								</div>
+							)}
 
 							{user.bio && (
 								<div className="mb-6 py-3 px-4 bg-muted/30 rounded-lg border border-border/50">
@@ -176,7 +177,7 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 			</Card>
 
 			{/* Social Links */}
-			{(user.linkedin || user.instagram || user.github || user.twitter) && (
+			{(user.linkedin || user.instagram || user.twitter) && (
 				<Card>
 					<CardHeader>
 						<CardTitle>Redes sociais</CardTitle>
@@ -217,15 +218,6 @@ export default async function ColleagueDetailPage({ params }: PageParams) {
 								>
 									<Twitter className="mr-2 h-4 w-4 text-sky-500" />
 									<span className="text-sky-700 dark:text-sky-300">@{user.twitter.replace('@', '')}</span>
-								</a>
-							</Button>
-						)}
-
-						{user.github && (
-							<Button variant="outline" className="hover:bg-muted" asChild>
-								<a href={user.github} target="_blank" rel="noopener noreferrer">
-									<Github className="mr-2 h-4 w-4 text-foreground/80" />
-									<span className="text-foreground/90">GitHub</span>
 								</a>
 							</Button>
 						)}

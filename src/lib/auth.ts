@@ -16,8 +16,8 @@ declare module 'next-auth' {
 
 const SESSION_KEYS: ReadonlyArray<keyof SessionUser> = [
   'id', 'email', 'name', 'avatar', 'role', 'cargo', 'lotacao', 'status',
-  'courseId', 'courseName', 'city', 'country', 'whatsapp',
-  'linkedin', 'instagram', 'github', 'twitter', 'company', 'bio',
+  'courseId', 'courseName', 'state', 'city', 'whatsapp',
+  'linkedin', 'instagram', 'twitter', 'bio',
   'isEmailVerified', 'profileCompleted',
 ]
 
@@ -58,14 +58,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           status: user.status,
           courseId: user.courseId?.toString(),
           courseName: user.courseName,
+          state: user.state,
           city: user.city,
-          country: user.country,
           whatsapp: user.whatsapp,
           linkedin: user.linkedin,
           instagram: user.instagram,
-          github: user.github,
           twitter: user.twitter,
-          company: user.company,
           bio: user.bio,
           isEmailVerified: user.emailVerified,
           profileCompleted: user.profileCompleted,
