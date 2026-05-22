@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
+import { Lotacao } from '@/models/lotacao'
 import { auth } from '@/lib/auth'
 import { profileSchema } from '@/lib/validations'
 import { createError, formatErrorResponse, ErrorCode } from '@/lib/errors'
@@ -91,8 +92,26 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 			return NextResponse.json(error.toJSON(), { status: error.statusCode })
 		}
 
-		const updateData: Record<string, unknown> = { ...validationResult.data }
+		const { lotacaoId, ...rest } = validationResult.data
+		const updateData: Record<string, unknown> = { ...rest }
 		let emailChanged = false
+
+		// Resolve lotação and derive state/city + denormalized fields
+		if (lotacaoId) {
+			const lotacao = await Lotacao.findById(lotacaoId).lean()
+			if (!lotacao) {
+				return NextResponse.json(
+					{ error: 'Lotação não encontrada.', code: ErrorCode.VALIDATION_FAILED },
+					{ status: 400 }
+				)
+			}
+			updateData.lotacaoId = lotacao._id
+			updateData.lotacaoSigla = lotacao.sigla
+			updateData.lotacaoNome = lotacao.nome
+			updateData.lotacaoTipo = lotacao.tipo
+			updateData.state = lotacao.uf
+			updateData.city = lotacao.cidade
+		}
 
 		if (
 			updateData.email &&
@@ -117,7 +136,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 		const isAdmin = updateData.role === USER_ROLES.ADMIN
 		const profileCompleted =
 			Boolean(updateData.whatsapp) &&
-			Boolean(updateData.lotacao) &&
+			Boolean(updateData.lotacaoId) &&
 			(isAdmin || Boolean(updateData.cargo))
 
 		updateData.profileCompleted = profileCompleted

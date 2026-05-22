@@ -20,7 +20,8 @@ export async function GET() {
       name: u.name,
       email: u.email,
       cargo: u.cargo,
-      lotacao: u.lotacao,
+      lotacaoSigla: u.lotacaoSigla,
+      lotacaoNome: u.lotacaoNome,
       createdAt: u.createdAt,
     })),
   })

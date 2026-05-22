@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
     filter.$or = [
       { name: { $regex: q, $options: 'i' } },
       { email: { $regex: q, $options: 'i' } },
-      { lotacao: { $regex: q, $options: 'i' } },
+      { lotacaoSigla: { $regex: q, $options: 'i' } },
+      { lotacaoNome: { $regex: q, $options: 'i' } },
     ]
   }
 
@@ -53,12 +54,17 @@ export async function GET(req: NextRequest) {
       avatar: u.avatar,
       role: u.role,
       cargo: u.cargo,
-      lotacao: u.lotacao,
       whatsapp: u.whatsapp,
       status: u.status,
       isActive: u.isActive,
       courseId: u.courseId?.toString(),
       courseName: u.courseName,
+      lotacaoId: u.lotacaoId?.toString(),
+      lotacaoSigla: u.lotacaoSigla,
+      lotacaoNome: u.lotacaoNome,
+      lotacaoTipo: u.lotacaoTipo,
+      state: u.state,
+      city: u.city,
       createdAt: u.createdAt,
     })),
     total,

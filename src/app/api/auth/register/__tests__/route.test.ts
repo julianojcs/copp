@@ -6,6 +6,7 @@ const createUserMock = vi.fn()
 const findOneSettingsMock = vi.fn()
 const findOneCourseMock = vi.fn()
 const findByIdCourseMock = vi.fn()
+const findByIdLotacaoMock = vi.fn()
 const connectDBMock = vi.fn().mockResolvedValue({})
 const sendWelcomeMock = vi.fn().mockResolvedValue(undefined)
 
@@ -24,6 +25,11 @@ vi.mock('@/models/course', () => ({
     }),
   },
 }))
+vi.mock('@/models/lotacao', () => ({
+  Lotacao: {
+    findById: (...args: unknown[]) => ({ lean: () => findByIdLotacaoMock(...args) }),
+  },
+}))
 vi.mock('@/models/app-settings', () => ({
   AppSettings: { findOne: () => ({ lean: () => findOneSettingsMock() }) },
 }))
@@ -39,16 +45,25 @@ function makeRequest(body: unknown): Request {
   })
 }
 
+const VALID_ID = 'a'.repeat(24)
+
 const validBody = {
   name: 'Joao Silva',
   email: 'joao@pf.gov.br',
   password: 'Senha123',
   confirmPassword: 'Senha123',
   whatsapp: '(61) 99999-9999',
-  lotacao: 'SR/DF',
+  lotacaoId: VALID_ID,
   cargo: 'APF',
-  state: 'DF',
-  city: 'Brasília',
+}
+
+const sampleLotacao = {
+  _id: VALID_ID,
+  sigla: 'SR/PF/DF',
+  nome: 'Superintendência Regional no Distrito Federal',
+  tipo: 'Superintendência Regional',
+  uf: 'DF',
+  cidade: 'Brasília',
 }
 
 describe('POST /api/auth/register', () => {
@@ -58,6 +73,7 @@ describe('POST /api/auth/register', () => {
     findOneSettingsMock.mockReset()
     findOneCourseMock.mockReset()
     findByIdCourseMock.mockReset()
+    findByIdLotacaoMock.mockReset()
     sendWelcomeMock.mockClear()
     findOneSettingsMock.mockResolvedValue(null)
     findOneCourseMock.mockResolvedValue({
@@ -65,33 +81,43 @@ describe('POST /api/auth/register', () => {
       name: 'V COPP',
       isActive: true,
     })
+    findByIdLotacaoMock.mockResolvedValue(sampleLotacao)
   })
 
-  it('rejects missing state with 400', async () => {
-    findOneUserMock.mockResolvedValue(null)
-    const res = await POST(makeRequest({ ...validBody, state: '' }) as never)
+  it('rejects missing lotacaoId with 400', async () => {
+    const res = await POST(makeRequest({ ...validBody, lotacaoId: '' }) as never)
     expect(res.status).toBe(400)
   })
 
-  it('rejects invalid state UF with 400', async () => {
-    findOneUserMock.mockResolvedValue(null)
-    const res = await POST(makeRequest({ ...validBody, state: 'XX' }) as never)
+  it('rejects invalid lotacaoId format with 400', async () => {
+    const res = await POST(makeRequest({ ...validBody, lotacaoId: 'not-an-id' }) as never)
     expect(res.status).toBe(400)
   })
 
-  it('creates a user with normalized uppercase state', async () => {
+  it('returns 400 when lotacao is not found in DB', async () => {
+    findByIdLotacaoMock.mockResolvedValueOnce(null)
+    findOneUserMock.mockResolvedValue(null)
+    const res = await POST(makeRequest(validBody) as never)
+    expect(res.status).toBe(400)
+    expect(createUserMock).not.toHaveBeenCalled()
+  })
+
+  it('creates a user denormalizing lotacao fields and deriving state/city', async () => {
     findOneUserMock.mockResolvedValue(null)
     createUserMock.mockResolvedValue({ _id: 'new-user-id', email: validBody.email, name: validBody.name })
 
-    const res = await POST(makeRequest({ ...validBody, state: 'df' }) as never)
+    const res = await POST(makeRequest(validBody) as never)
     expect(res.status).toBe(201)
     expect(createUserMock).toHaveBeenCalledTimes(1)
     expect(createUserMock.mock.calls[0][0]).toMatchObject({
       email: 'joao@pf.gov.br',
-      state: 'DF',
-      city: 'Brasília',
       role: 'aluno',
       status: 'pending',
+      lotacaoSigla: 'SR/PF/DF',
+      lotacaoNome: 'Superintendência Regional no Distrito Federal',
+      lotacaoTipo: 'Superintendência Regional',
+      state: 'DF',
+      city: 'Brasília',
     })
   })
 
@@ -108,12 +134,5 @@ describe('POST /api/auth/register', () => {
     sendWelcomeMock.mockRejectedValueOnce(new Error('smtp down'))
     const res = await POST(makeRequest(validBody) as never)
     expect(res.status).toBe(201)
-  })
-
-  it('persists city as undefined when empty', async () => {
-    findOneUserMock.mockResolvedValue(null)
-    createUserMock.mockResolvedValue({ _id: 'id', email: 'a@b', name: 'A B' })
-    await POST(makeRequest({ ...validBody, city: '' }) as never)
-    expect(createUserMock.mock.calls[0][0].city).toBeUndefined()
   })
 })

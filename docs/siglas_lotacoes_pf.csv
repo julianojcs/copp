@@ -1,0 +1,122 @@
+﻿Sigla;Nome;Tipo;UF;Cidade
+DIREX/PF;Diretoria-Geral / Diretoria Executiva;Unidade Central;DF;Brasília
+DICOR/PF;Diretoria de Investigação e Combate ao Crime Organizado e à Corrupção;Unidade Central;DF;Brasília
+DGP/PF;Diretoria de Gestão de Pessoas;Unidade Central;DF;Brasília
+DLOG/PF;Diretoria de Administração e Logística Policial;Unidade Central;DF;Brasília
+DINT/PF;Diretoria de Inteligência Policial;Unidade Central;DF;Brasília
+DTI/PF;Diretoria de Tecnologia da Informação e Inovação;Unidade Central;DF;Brasília
+DAMAZ/PF;Diretoria da Amazônia e Meio Ambiente;Unidade Central;DF;Brasília
+DCIBER/PF;Diretoria de Combate a Crimes Cibernéticos;Unidade Central;DF;Brasília
+COGER/PF;Corregedoria-Geral de Polícia Federal;Unidade Central;DF;Brasília
+ANP/PF;Academia Nacional de Polícia;Unidade Central;DF;Brasília
+INI/PF;Instituto Nacional de Identificação;Unidade Central;DF;Brasília
+INC/PF;Instituto Nacional de Criminalística;Unidade Central;DF;Brasília
+COT/PF;Comando de Operações Táticas;Unidade Central;DF;Brasília
+CAOP/PF;Coordenação de Aviação Operacional;Unidade Central;DF;Brasília
+SR/PF/AC;Superintendência Regional no Acre;Superintendência Regional;AC;Rio Branco
+SR/PF/AL;Superintendência Regional em Alagoas;Superintendência Regional;AL;Maceió
+SR/PF/AM;Superintendência Regional no Amazonas;Superintendência Regional;AM;Manaus
+SR/PF/AP;Superintendência Regional no Amapá;Superintendência Regional;AP;Macapá
+SR/PF/BA;Superintendência Regional na Bahia;Superintendência Regional;BA;Salvador
+SR/PF/CE;Superintendência Regional no Ceará;Superintendência Regional;CE;Fortaleza
+SR/PF/DF;Superintendência Regional no Distrito Federal;Superintendência Regional;DF;Brasília
+SR/PF/ES;Superintendência Regional no Espírito Santo;Superintendência Regional;ES;Vitória
+SR/PF/GO;Superintendência Regional em Goiás;Superintendência Regional;GO;Goiânia
+SR/PF/MA;Superintendência Regional no Maranhão;Superintendência Regional;MA;São Luís
+SR/PF/MG;Superintendência Regional em Minas Gerais;Superintendência Regional;MG;Belo Horizonte
+SR/PF/MS;Superintendência Regional em Mato Grosso do Sul;Superintendência Regional;MS;Campo Grande
+SR/PF/MT;Superintendência Regional em Mato Grosso;Superintendência Regional;MT;Cuiabá
+SR/PF/PA;Superintendência Regional no Pará;Superintendência Regional;PA;Belém
+SR/PF/PB;Superintendência Regional na Paraíba;Superintendência Regional;PB;João Pessoa
+SR/PF/PE;Superintendência Regional em Pernambuco;Superintendência Regional;PE;Recife
+SR/PF/PI;Superintendência Regional no Piauí;Superintendência Regional;PI;Teresina
+SR/PF/PR;Superintendência Regional no Paraná;Superintendência Regional;PR;Curitiba
+SR/PF/RJ;Superintendência Regional no Rio de Janeiro;Superintendência Regional;RJ;Rio de Janeiro
+SR/PF/RN;Superintendência Regional no Rio Grande do Norte;Superintendência Regional;RN;Natal
+SR/PF/RO;Superintendência Regional em Rondônia;Superintendência Regional;RO;Porto Velho
+SR/PF/RR;Superintendência Regional em Roraima;Superintendência Regional;RR;Boa Vista
+SR/PF/RS;Superintendência Regional no Rio Grande do Sul;Superintendência Regional;RS;Porto Alegre
+SR/PF/SC;Superintendência Regional em Santa Catarina;Superintendência Regional;SC;Florianópolis
+SR/PF/SE;Superintendência Regional em Sergipe;Superintendência Regional;SE;Aracaju
+SR/PF/SP;Superintendência Regional em São Paulo;Superintendência Regional;SP;São Paulo
+SR/PF/TO;Superintendência Regional al em Tocantins;Superintendência Regional;TO;Palmas
+DPF/CZS/AC;Delegacia de Polícia Federal em Cruzeiro do Sul;Delegacia Regional;AC;Cruzeiro do Sul
+DPF/TBS/AM;Delegacia de Polícia Federal em Tabatinga;Delegacia de Fronteira;AM;Tabatinga
+DPF/SGC/AM;Delegacia de Polícia Federal em São Gabriel da Cachoeira;Delegacia de Fronteira;AM;São Gabriel da Cachoeira
+DPF/ILS/BA;Delegacia de Polícia Federal em Ilhéus;Delegacia Regional;BA;Ilhéus
+DPF/VDC/BA;Delegacia de Polícia Federal em Vitória da Conquista;Delegacia Regional;BA;Vitória da Conquista
+DPF/FSA/BA;Delegacia de Polícia Federal em Feira de Santana;Delegacia Regional;BA;Feira de Santana
+DPF/JUI/BA;Delegacia de Polícia Federal em Juazeiro;Delegacia Regional;BA;Juazeiro
+DPF/JVE/SC;Delegacia de Polícia Federal em Joinville;Delegacia Regional;SC;Joinville
+DPF/LGS/SC;Delegacia de Polícia Federal em Lages;Delegacia Regional;SC;Lages
+DPF/CCM/SC;Delegacia de Polícia Federal em Criciúma;Delegacia Regional;SC;Criciúma
+DPF/FIG/PR;Delegacia de Polícia Federal em Foz do Iguaçu;Delegacia de Fronteira;PR;Foz do Iguaçu
+DPF/GUA/PR;Delegacia de Polícia Federal em Guaíra;Delegacia de Fronteira;PR;Guaíra
+DPF/LDB/PR;Delegacia de Polícia Federal em Londrina;Delegacia Regional;PR;Londrina
+DPF/MGA/PR;Delegacia de Polícia Federal em Maringá;Delegacia Regional;PR;Maringá
+DPF/PGA/PR;Delegacia de Polícia Federal em Ponta Grossa;Delegacia Regional;PR;Ponta Grossa
+DPF/CAS/PR;Delegacia de Polícia Federal em Cascavel;Delegacia Regional;PR;Cascavel
+DPF/CRA/MS;Delegacia de Polícia Federal em Corumbá;Delegacia de Fronteira;MS;Corumbá
+DPF/PPO/MS;Delegacia de Polícia Federal em Ponta Porã;Delegacia de Fronteira;MS;Ponta Porã
+DPF/TLS/MS;Delegacia de Polícia Federal em Três Lagoas;Delegacia Regional;MS;Três Lagoas
+DPF/DOD/MS;Delegacia de Polícia Federal em Dourados;Delegacia Regional;MS;Dourados
+DPF/NVS/MS;Delegacia de Polícia Federal em Naviraí;Delegacia de Fronteira;MS;Naviraí
+DPF/ROO/MT;Delegacia de Polícia Federal em Rondonópolis;Delegacia Regional;MT;Rondonópolis
+DPF/SIN/MT;Delegacia de Polícia Federal em Sinop;Delegacia Regional;MT;Sinop
+DPF/CRA/MT;Delegacia de Polícia Federal em Cáceres;Delegacia de Fronteira;MT;Cáceres
+DPF/BVA/MT;Delegacia de Polícia Federal em Barra do Garças;Delegacia Regional;MT;Barra do Garças
+DPF/STM/PA;Delegacia de Polícia Federal em Santarém;Delegacia Regional;PA;Santarém
+DPF/MBA/PA;Delegacia de Polícia Federal em Marabá;Delegacia Regional;PA;Marabá
+DPF/RCH/PA;Delegacia de Polícia Federal em Redenção;Delegacia Regional;PA;Redenção
+DPF/ALT/PA;Delegacia de Polícia Federal em Altamira;Delegacia Regional;PA;Altamira
+DPF/VRE/MG;Delegacia de Polícia Federal em Varginha;Delegacia Regional;MG;Varginha
+DPF/UDI/MG;Delegacia de Polícia Federal em Uberlândia;Delegacia Regional;MG;Uberlândia
+DPF/URA/MG;Delegacia de Polícia Federal em Uberaba;Delegacia Regional;MG;Uberaba
+DPF/MCO/MG;Delegacia de Polícia Federal em Montes Claros;Delegacia Regional;MG;Montes Claros
+DPF/JFA/MG;Delegacia de Polícia Federal em Juiz de Fora;Delegacia Regional;MG;Juiz de Fora
+DPF/GVA/MG;Delegacia de Polícia Federal em Governador Valadares;Delegacia Regional;MG;Governador Valadares
+DPF/DIP/MG;Delegacia de Polícia Federal em Divinópolis;Delegacia Regional;MG;Divinópolis
+DPF/SJK/SP;Delegacia de Polícia Federal em São José dos Campos;Delegacia Regional;SP;São José dos Campos
+DPF/STS/SP;Delegacia de Polícia Federal em Santos;Delegacia Regional / Portuária;SP;Santos
+DPF/CPS/SP;Delegacia de Polícia Federal em Campinas;Delegacia Regional;SP;Campinas
+DPF/RPB/SP;Delegacia de Polícia Federal em Ribeirão Preto;Delegacia Regional;SP;Ribeirão Preto
+DPF/SJR/SP;Delegacia de Polícia Federal em São José do Rio Preto;Delegacia Regional;SP;São José do Rio Preto
+DPF/BRL/SP;Delegacia de Polícia Federal em Marília;Delegacia Regional;SP;Marília
+DPF/BAU/SP;Delegacia de Polícia Federal em Bauru;Delegacia Regional;SP;Bauru
+DPF/ARA/SP;Delegacia de Polícia Federal em Araçatuba;Delegacia Regional;SP;Araçatuba
+DPF/PPr/SP;Delegacia de Polícia Federal em Presidente Prudente;Delegacia Regional;SP;Presidente Prudente
+DPF/PME/SP;Delegacia de Polícia Federal em Piracicaba;Delegacia Regional;SP;Piracicaba
+DPF/JND/SP;Delegacia de Polícia Federal em Jundiaí;Delegacia Regional;SP;Jundiaí
+DPF/CRU/SP;Delegacia de Polícia Federal em Cruzeiro;Delegacia Regional;SP;Cruzeiro
+DPF/NLI/RJ;Delegacia de Polícia Federal em Niterói;Delegacia Regional;RJ;Niterói
+DPF/CGB/RJ;Delegacia de Polícia Federal em Campos dos Goytacazes;Delegacia Regional;RJ;Campos dos Goytacazes
+DPF/MCE/RJ;Delegacia de Polícia Federal em Macaé;Delegacia Regional;RJ;Macaé
+DPF/VRD/RJ;Delegacia de Polícia Federal em Volta Redonda;Delegacia Regional;RJ;Volta Redonda
+DPF/ANG/RJ;Delegacia de Polícia Federal em Angra dos Reis;Delegacia Regional;RJ;Angra dos Reis
+DPF/PAS/RS;Delegacia de Polícia Federal em Passo Fundo;Delegacia Regional;RS;Passo Fundo
+DPF/SMA/RS;Delegacia de Polícia Federal em Santa Maria;Delegacia Regional;RS;Santa Maria
+DPF/PEL/RS;Delegacia de Polícia Federal em Pelotas;Delegacia Regional;RS;Pelotas
+DPF/RGr/RS;Delegacia de Polícia Federal em Rio Grande;Delegacia Regional / Portuária;RS;Rio Grande
+DPF/CXS/RS;Delegacia de Polícia Federal em Caxias do Sul;Delegacia Regional;RS;Caxias do Sul
+DPF/URU/RS;Delegacia de Polícia Federal em Uruguaiana;Delegacia de Fronteira;RS;Uruguaiana
+DPF/SGB/RS;Delegacia de Polícia Federal em São Borja;Delegacia de Fronteira;RS;São Borja
+DPF/STA/RS;Delegacia de Polícia Federal em Santa Vitória do Palmar;Delegacia de Fronteira;RS;Santa Vitória do Palmar
+DPF/SNA/RS;Delegacia de Polícia Federal em Santana do Livramento;Delegacia de Fronteira;RS;Santana do Livramento
+DPF/CHY/RS;Delegacia de Polícia Federal em Chuí;Delegacia de Fronteira;RS;Chuí
+DPF/BGE/RS;Delegacia de Polícia Federal em Bagé;Delegacia de Fronteira;RS;Bagé
+DPF/VLM/RO;Delegacia de Polícia Federal em Vilhena;Delegacia de Fronteira;RO;Vilhena
+DPF/GMR/RO;Delegacia de Polícia Federal em Guajará-Mirim;Delegacia de Fronteira;RO;Guajará-Mirim
+DPF/JPR/RO;Delegacia de Polícia Federal em Ji-Paraná;Delegacia Regional;RO;Ji-Paraná
+DPF/PNA/PI;Delegacia de Polícia Federal em Parnaíba;Delegacia Regional;PI;Parnaíba
+DPF/CCV/CE;Delegacia de Polícia Federal em Juazeiro do Norte;Delegacia Regional;CE;Juazeiro do Norte
+DPF/MOS/RN;Delegacia de Polícia Federal em Mossoró;Delegacia Regional;RN;Mossoró
+DPF/CPG/PB;Delegacia de Polícia Federal em Campina Grande;Delegacia Regional;PB;Campina Grande
+DPF/PLN/PE;Delegacia de Polícia Federal em Petrolina;Delegacia Regional;PE;Petrolina
+DPF/CAU/PE;Delegacia de Polícia Federal em Caruaru;Delegacia Regional;PE;Caruaru
+DPF/ITZ/MA;Delegacia de Polícia Federal em Imperatriz;Delegacia Regional;MA;Imperatriz
+DPF/CWS/AP;Delegacia de Polícia Federal no Oiapoque;Delegacia de Fronteira;AP;Oiapoque
+DPF/SAr/TO;Delegacia de Polícia Federal em Araguaína;Delegacia Regional;TO;Araguaína
+DPF/ANP/GO;Delegacia de Polícia Federal em Anápolis;Delegacia Regional;GO;Anápolis
+DPF/JTI/GO;Delegacia de Polícia Federal em Jataí;Delegacia Regional;GO;Jataí
+DPF/LFN/ES;Delegacia de Polícia Federal em São Mateus;Delegacia Regional;ES;São Mateus
+DPF/CRI/ES;Delegacia de Polícia Federal em Cachoeiro de Itapemirim;Delegacia Regional;ES;Cachoeiro de Itapemirim

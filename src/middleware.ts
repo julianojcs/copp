@@ -13,6 +13,7 @@ const publicRoutes = [
   '/aguardando-aprovacao',
   '/api/courses',
   '/api/branding',
+  '/api/lotacoes',
 ]
 
 const MODERATOR_ROLES: ReadonlyArray<string> = [

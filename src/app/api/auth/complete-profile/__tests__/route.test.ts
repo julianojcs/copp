@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 const findOneUserMock = vi.fn()
 const createUserMock = vi.fn()
+const findByIdLotacaoMock = vi.fn()
 const connectDBMock = vi.fn().mockResolvedValue({})
 
 vi.mock('@/lib/db', () => ({ connectDB: () => connectDBMock() }))
@@ -10,6 +11,11 @@ vi.mock('@/models/user', () => ({
   User: {
     findOne: (...args: unknown[]) => findOneUserMock(...args),
     create: (...args: unknown[]) => createUserMock(...args),
+  },
+}))
+vi.mock('@/models/lotacao', () => ({
+  Lotacao: {
+    findById: (...args: unknown[]) => ({ lean: () => findByIdLotacaoMock(...args) }),
   },
 }))
 
@@ -23,32 +29,49 @@ function makeRequest(body: unknown): Request {
   })
 }
 
+const VALID_ID = 'a'.repeat(24)
+
 const validBody = {
   email: 'novo@pf.gov.br',
   name: 'Maria Souza',
   googleId: 'google-abc',
-  lotacao: 'SR/SP',
+  lotacaoId: VALID_ID,
   whatsapp: '(11) 99999-9999',
   cargo: 'EPF',
-  state: 'SP',
-  city: 'São Paulo',
+}
+
+const sampleLotacao = {
+  _id: VALID_ID,
+  sigla: 'SR/PF/SP',
+  nome: 'Superintendência Regional em São Paulo',
+  tipo: 'Superintendência Regional',
+  uf: 'SP',
+  cidade: 'São Paulo',
 }
 
 describe('POST /api/auth/complete-profile', () => {
   beforeEach(() => {
     findOneUserMock.mockReset()
     createUserMock.mockReset()
+    findByIdLotacaoMock.mockReset()
+    findByIdLotacaoMock.mockResolvedValue(sampleLotacao)
   })
 
-  it('rejects missing state', async () => {
-    const res = await POST(makeRequest({ ...validBody, state: '' }) as never)
+  it('rejects missing lotacaoId', async () => {
+    const res = await POST(makeRequest({ ...validBody, lotacaoId: '' }) as never)
     expect(res.status).toBe(400)
     const data = await res.json()
-    expect(data.error).toMatch(/estado/i)
+    expect(data.error).toMatch(/lota/i)
   })
 
-  it('rejects invalid state UF', async () => {
-    const res = await POST(makeRequest({ ...validBody, state: 'XX' }) as never)
+  it('rejects invalid lotacaoId format', async () => {
+    const res = await POST(makeRequest({ ...validBody, lotacaoId: 'not-valid' }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when lotacao is not found', async () => {
+    findByIdLotacaoMock.mockResolvedValueOnce(null)
+    const res = await POST(makeRequest(validBody) as never)
     expect(res.status).toBe(400)
   })
 
@@ -68,14 +91,15 @@ describe('POST /api/auth/complete-profile', () => {
     expect(createUserMock.mock.calls[0][0].role).toBe('admin')
   })
 
-  it('creates user with uppercased state and trimmed city', async () => {
+  it('creates user denormalizing lotacao and deriving state/city', async () => {
     findOneUserMock.mockResolvedValue(null)
     createUserMock.mockResolvedValue({ _id: { toString: () => 'u1' } })
-    const res = await POST(
-      makeRequest({ ...validBody, state: 'sp', city: '   São Paulo   ' }) as never
-    )
+    const res = await POST(makeRequest(validBody) as never)
     expect(res.status).toBe(201)
     expect(createUserMock.mock.calls[0][0]).toMatchObject({
+      lotacaoSigla: 'SR/PF/SP',
+      lotacaoNome: 'Superintendência Regional em São Paulo',
+      lotacaoTipo: 'Superintendência Regional',
       state: 'SP',
       city: 'São Paulo',
     })
@@ -86,12 +110,5 @@ describe('POST /api/auth/complete-profile', () => {
     const res = await POST(makeRequest(validBody) as never)
     expect(res.status).toBe(409)
     expect(createUserMock).not.toHaveBeenCalled()
-  })
-
-  it('persists city as undefined when only whitespace', async () => {
-    findOneUserMock.mockResolvedValue(null)
-    createUserMock.mockResolvedValue({ _id: { toString: () => 'u1' } })
-    await POST(makeRequest({ ...validBody, city: '   ' }) as never)
-    expect(createUserMock.mock.calls[0][0].city).toBeUndefined()
   })
 })

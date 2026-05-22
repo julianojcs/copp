@@ -5,7 +5,12 @@ export interface UserRow {
   avatar?: string
   role: string
   cargo?: string
-  lotacao: string
+  lotacaoId?: string
+  lotacaoSigla?: string
+  lotacaoNome?: string
+  lotacaoTipo?: string
+  state?: string
+  city?: string
   whatsapp: string
   status: string
   isActive: boolean

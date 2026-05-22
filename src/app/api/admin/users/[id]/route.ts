@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/user'
+import { Lotacao } from '@/models/lotacao'
 import { canEditUser, canAssignAdminRole } from '@/lib/permissions'
 import { USER_ROLES } from '@/lib/constants'
 
@@ -10,10 +11,12 @@ interface RouteParams {
 }
 
 const EDITABLE_FIELDS = [
-  'name', 'email', 'avatar', 'cargo', 'lotacao', 'whatsapp',
+  'name', 'email', 'avatar', 'cargo', 'whatsapp',
   'role', 'status', 'isActive', 'courseId', 'courseName',
-  'state', 'city', 'linkedin', 'instagram', 'twitter', 'bio',
+  'lotacaoId', 'linkedin', 'instagram', 'twitter', 'bio',
 ] as const
+
+const OBJECT_ID_RE = /^[a-fA-F0-9]{24}$/
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const session = await auth()
@@ -40,6 +43,24 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   }
 
   await connectDB()
+
+  // Resolve lotacaoId if provided: copy denormalized fields + derive state/city
+  if (typeof update.lotacaoId === 'string') {
+    if (!OBJECT_ID_RE.test(update.lotacaoId)) {
+      return NextResponse.json({ error: 'Lotação inválida' }, { status: 400 })
+    }
+    const lotacao = await Lotacao.findById(update.lotacaoId).lean()
+    if (!lotacao) {
+      return NextResponse.json({ error: 'Lotação não encontrada' }, { status: 400 })
+    }
+    update.lotacaoId = lotacao._id
+    update.lotacaoSigla = lotacao.sigla
+    update.lotacaoNome = lotacao.nome
+    update.lotacaoTipo = lotacao.tipo
+    update.state = lotacao.uf
+    update.city = lotacao.cidade
+  }
+
   const updated = await User.findByIdAndUpdate(id, update, { new: true, runValidators: true })
   if (!updated) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
   return NextResponse.json({ ok: true })
@@ -65,13 +86,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     avatar: u.avatar,
     role: u.role,
     cargo: u.cargo,
-    lotacao: u.lotacao,
     whatsapp: u.whatsapp,
     status: u.status,
     isActive: u.isActive,
     rejectedReason: u.rejectedReason,
     courseId: u.courseId?.toString(),
     courseName: u.courseName,
+    lotacaoId: u.lotacaoId?.toString(),
+    lotacaoSigla: u.lotacaoSigla,
+    lotacaoNome: u.lotacaoNome,
+    lotacaoTipo: u.lotacaoTipo,
     state: u.state,
     city: u.city,
     linkedin: u.linkedin,

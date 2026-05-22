@@ -23,7 +23,8 @@ interface IUser {
   avatar?: string
   role: string
   cargo?: string
-  lotacao?: string
+  lotacaoSigla?: string
+  lotacaoNome?: string
   whatsapp?: string
   linkedin?: string
   instagram?: string

@@ -14,6 +14,15 @@ export const citySchema = z
   .optional()
   .or(z.literal(''))
 
+export const objectIdSchema = z
+  .string()
+  .regex(/^[a-fA-F0-9]{24}$/, 'Identificador inválido')
+
+export const lotacaoIdSchema = z
+  .string()
+  .min(1, 'Lotação é obrigatória')
+  .regex(/^[a-fA-F0-9]{24}$/, 'Lotação inválida')
+
 /**
  * Brazilian WhatsApp number — accepts common formats:
  *   "(11) 99999-9999", "11999999999", "+55 11 99999-9999"
@@ -34,11 +43,6 @@ export const fullNameSchema = z
   .min(5, 'Nome completo deve ter ao menos 5 caracteres')
   .max(100, 'Nome completo não pode exceder 100 caracteres')
   .refine((v) => /\s/.test(v.trim()), 'Informe o nome completo (nome e sobrenome)')
-
-export const lotacaoSchema = z
-  .string()
-  .min(1, 'Lotação é obrigatória')
-  .max(200, 'Lotação não pode exceder 200 caracteres')
 
 export const cargoSchema = z.enum(
   Object.values(PF_CARGOS) as [string, ...string[]],
@@ -64,11 +68,9 @@ export const registerSchema = z
     password: passwordSchema,
     confirmPassword: z.string(),
     whatsapp: whatsappSchema,
-    lotacao: lotacaoSchema,
+    lotacaoId: lotacaoIdSchema,
     cargo: cargoSchema,
     bio: z.string().max(500, 'Bio não pode exceder 500 caracteres').optional().or(z.literal('')),
-    state: stateSchema,
-    city: citySchema,
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'As senhas não conferem',
@@ -112,14 +114,12 @@ export const profileSchema = z
     email: z.string().email('Email inválido'),
     role: z.enum(Object.values(USER_ROLES) as [string, ...string[]], { message: 'Função inválida' }),
     cargo: cargoSchema.optional(),
-    lotacao: lotacaoSchema,
+    lotacaoId: lotacaoIdSchema,
     whatsapp: whatsappSchema,
     linkedin: z.string().url('URL inválida').optional().or(z.literal('')),
     instagram: z.string().optional().or(z.literal('')),
     twitter: z.string().optional().or(z.literal('')),
     bio: z.string().max(500, 'Bio não pode exceder 500 caracteres').optional().or(z.literal('')),
-    state: stateSchema,
-    city: citySchema,
   })
   .refine((d) => d.role === USER_ROLES.ADMIN || !!d.cargo, {
     message: 'Cargo é obrigatório',

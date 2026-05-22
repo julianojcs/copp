@@ -37,7 +37,7 @@ export function ProfileCompletionBanner() {
 	// Campos obrigatórios: whatsapp, lotacao, e cargo (exceto admin)
 	const missingFields: string[] = []
 	if (!u.whatsapp) missingFields.push('WhatsApp')
-	if (!u.lotacao) missingFields.push('Lotação')
+	if (!u.lotacaoId) missingFields.push('Lotação')
 	if (!isAdmin && !u.cargo) missingFields.push('Cargo')
 
 	const isProfileComplete = missingFields.length === 0

@@ -9,6 +9,7 @@ import {
   type UserStatus,
 } from '@/lib/constants'
 import { VALID_UFS } from '@/lib/constants/brazilian-states'
+import { LOTACAO_TIPOS, type LotacaoTipo } from '@/models/lotacao'
 
 export interface IUser extends Document {
   _id: Types.ObjectId
@@ -25,14 +26,19 @@ export interface IUser extends Document {
   // V COPP fields
   role: UserRole
   cargo?: PFCargo
-  lotacao: string
   whatsapp: string
   courseId?: Types.ObjectId
   courseName: string
 
-  // location (IBGE)
+  // lotacao (PF unit) — referenced by id + denormalized for listings
+  lotacaoId: Types.ObjectId
+  lotacaoSigla: string
+  lotacaoNome: string
+  lotacaoTipo: LotacaoTipo
+
+  // location — derived from lotacao (not user-editable)
   state: string
-  city?: string
+  city: string
 
   // moderation
   status: UserStatus
@@ -75,11 +81,23 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: Object.values(PF_CARGOS),
     },
-    lotacao: { type: String, required: true, trim: true, maxlength: 200 },
     whatsapp: { type: String, required: true, trim: true },
 
     courseId: { type: Schema.Types.ObjectId, ref: 'Course' },
     courseName: { type: String, required: true },
+
+    lotacaoId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Lotacao',
+      required: [true, 'Lotação é obrigatória'],
+    },
+    lotacaoSigla: { type: String, required: true, uppercase: true, trim: true },
+    lotacaoNome: { type: String, required: true, trim: true },
+    lotacaoTipo: {
+      type: String,
+      required: true,
+      enum: Object.values(LOTACAO_TIPOS),
+    },
 
     state: {
       type: String,
@@ -91,7 +109,12 @@ const UserSchema = new Schema<IUser>(
         message: 'Estado (UF) inválido',
       },
     },
-    city: { type: String, trim: true, maxlength: 100 },
+    city: {
+      type: String,
+      required: [true, 'Cidade é obrigatória'],
+      trim: true,
+      maxlength: 100,
+    },
 
     status: {
       type: String,
@@ -118,7 +141,8 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ courseId: 1, role: 1 })
 UserSchema.index({ status: 1 })
 UserSchema.index({ state: 1, city: 1 })
-UserSchema.index({ name: 'text', lotacao: 'text' })
+UserSchema.index({ lotacaoId: 1 })
+UserSchema.index({ name: 'text', lotacaoSigla: 'text', lotacaoNome: 'text' })
 
 UserSchema.pre('validate', async function () {
   if (this.role !== USER_ROLES.ADMIN && !this.cargo) {
