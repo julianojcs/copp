@@ -82,7 +82,23 @@ Turma/edicao. Campos: name, code (unique), description, startDate, endDate, loca
 Singleton de configuracao da aplicacao: brandName, brandFullName, institutionName, institutionFullName, description, activeCourseId, peerApprovalEnabled, developerName, developerLinkedinUrl. Lido via cache em `src/lib/app-settings.ts` (TTL 60s, fallback de 5s quando o DB esta indisponivel).
 
 ### Photo (`src/models/photo.ts`)
-Foto da galeria: uploadedBy, url, publicId, thumbnailUrl, title, description, location, takenAt, taggedUsers[], likes[], isPublic. Indices: createdAt desc, taggedUsers, text(location+title+description).
+Foto da galeria: uploadedBy, url, publicId, thumbnailUrl, title, description, location, takenAt, taggedUsers[], likes[], isPublic. Indices: createdAt desc, taggedUsers, text(location+title+description). O campo `likes[]` e legado e sera removido na issue #6 quando a galeria migrar para o ReactionPicker; o sistema de reacoes oficial e a colecao `Reaction` (polimorfica).
+
+### Reaction (`src/models/reaction.ts`)
+Reacao emoji polimorfica (estilo Facebook) em fotos e mensagens. Campos: userId, targetType (`photo` | `message`), targetId, type (`like` | `love` | `laugh` | `wow` | `sad` | `angry`). Indices: unico em `(userId, targetType, targetId)` (1 reacao por usuario por alvo - trocar emoji e substituicao via upsert) + listagem em `(targetType, targetId, createdAt desc)`.
+
+## Reacoes (sistema)
+
+API REST em `/api/reactions`:
+- `POST` body `{ targetType, targetId, type }` - upsert (substituicao por chave unica)
+- `DELETE` body `{ targetType, targetId }` - idempotente (no-op se nao existir)
+- `GET ?targetType=&targetId=` - retorna `{ counts: Record<ReactionType, number>, total, userReaction: ReactionType | null }`
+
+Status: `401` nao autenticado, `400` payload invalido (Zod), `404` alvo inexistente, `200` sucesso, `500` falha generica. Mensagens em pt-BR.
+
+Migracao do legado `Photo.likes`: `npx tsx scripts/migrate-photo-likes-to-reactions.ts` (suporta `--dry-run`). Idempotente via indice unico - re-execucoes pulam duplicatas. O campo `Photo.likes` e o endpoint `POST /api/photos/[id]/like` ficam funcionais ate a issue #6 retroceder a galeria.
+
+Suporte a `targetType: 'message'` esta declarado no enum, mas o lookup retorna 404 ate a issue #10 introduzir o modelo `Message`.
 
 ## Autenticacao
 

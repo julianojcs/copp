@@ -1,6 +1,11 @@
 // src/lib/validations.ts
 import { z } from 'zod'
-import { USER_ROLES, PF_CARGOS } from '@/lib/constants'
+import {
+  USER_ROLES,
+  PF_CARGOS,
+  REACTION_TYPES,
+  REACTION_TARGET_TYPES,
+} from '@/lib/constants'
 import { VALID_UFS } from '@/lib/constants/brazilian-states'
 
 export const stateSchema = z
@@ -154,3 +159,32 @@ export const changePasswordSchema = z
   })
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
+
+// Reactions (polymorphic emoji reactions on photos and messages)
+export const reactionTargetTypeSchema = z.enum(
+  Object.values(REACTION_TARGET_TYPES) as [string, ...string[]],
+)
+
+export const reactionTypeSchema = z.enum(
+  Object.values(REACTION_TYPES) as [string, ...string[]],
+)
+
+export const reactionUpsertSchema = z.object({
+  targetType: reactionTargetTypeSchema,
+  targetId: objectIdSchema,
+  type: reactionTypeSchema,
+})
+
+export const reactionDeleteSchema = z.object({
+  targetType: reactionTargetTypeSchema,
+  targetId: objectIdSchema,
+})
+
+export const reactionQuerySchema = z.object({
+  targetType: reactionTargetTypeSchema,
+  targetId: objectIdSchema,
+})
+
+export type ReactionUpsertInput = z.infer<typeof reactionUpsertSchema>
+export type ReactionDeleteInput = z.infer<typeof reactionDeleteSchema>
+export type ReactionQueryInput = z.infer<typeof reactionQuerySchema>

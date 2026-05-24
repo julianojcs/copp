@@ -36,3 +36,24 @@ export const COURSE_TYPES = {
 
 export type CourseType = typeof COURSE_TYPES[keyof typeof COURSE_TYPES]
 
+// Reaction types — Facebook-style emoji reactions on photos and messages
+export const REACTION_TYPES = {
+  LIKE: 'like',
+  LOVE: 'love',
+  LAUGH: 'laugh',
+  WOW: 'wow',
+  SAD: 'sad',
+  ANGRY: 'angry',
+} as const
+
+export type ReactionType = typeof REACTION_TYPES[keyof typeof REACTION_TYPES]
+
+// Polymorphic target types that can receive reactions and comments
+export const REACTION_TARGET_TYPES = {
+  PHOTO: 'photo',
+  MESSAGE: 'message',
+} as const
+
+export type ReactionTargetType =
+  typeof REACTION_TARGET_TYPES[keyof typeof REACTION_TARGET_TYPES]
+
