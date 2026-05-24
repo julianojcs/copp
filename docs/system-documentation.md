@@ -140,6 +140,29 @@ Quatro componentes reutilizaveis criados na issue #10, consumidos pela timeline 
 
 Date helper compartilhado: `formatRelativeTime` em `src/lib/date-utils.ts` retorna "agora ha pouco", "ha 3 min", "ha 2 h", "ha 5 dias" e cai para data absoluta pt-BR apos 7 dias.
 
+## Timeline (feed do dashboard)
+
+Feed unificado em `GET /api/timeline?cursor=&limit=` que agrega cinco tipos de evento:
+
+| `kind` | Fonte | Notas |
+|--------|-------|-------|
+| `new_member` | `User` (status=approved, isActive=true) | Card compacto |
+| `photo_posted` | `Photo` (isPublic) | Card com preview, autor, ReactionPicker, CommentThread |
+| `photo_commented` | `Comment` (targetType=photo) | Card com autor do comentario + thumbnail + body |
+| `message_posted` | `Message` | Renderizado via `<MessageCard>` (mesmo componente da issue #10) |
+| `message_commented` | `Comment` (targetType=message) | Card com autor + trecho da mensagem + body |
+
+Ranking: `score = log10(reactionsCount + commentsCount * 2 + 1) - hoursOld / 12` para posts (photo/message); demais eventos usam `-hoursOld / 12`. Calculado em JS apos as queries (todas as 5 sao paralelas via `Promise.all`).
+
+Estrategia de paginacao: cursor = ISO `createdAt`; cada sub-query busca `limit * 3` candidatos (default `limit=20`); merge + sort por score; retorna top `limit`. `nextCursor` aponta para o `createdAt` mais antigo do pool de candidatos (nao do retornado), evitando overlap de paginas. Trade-off: itens com alto score mas fora do pool de candidatos da pagina podem nao reaparecer. Aceitavel para v1 (turma pequena).
+
+Componentes:
+- `<Timeline>` (`src/components/timeline/timeline.tsx`) - composer no topo, lista paginada, infinite scroll via `IntersectionObserver`
+- `useTimeline()` hook (`src/hooks/use-timeline.ts`) - carrega primeira pagina no mount, expoe `loadNext()` e `prepend()` (usado pelo composer para insercao otimista)
+- 5 item-renderers em `src/components/timeline/items/`
+
+Substitui o `<TimelinePlaceholder />` introduzido em #7. Soft-deleted posts vem com body mascarado pelo backend.
+
 ## Autenticacao
 
 - Provider: NextAuth Credentials (email/senha bcrypt) + Google OAuth (via complete-profile)
