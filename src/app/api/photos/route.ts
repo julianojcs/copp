@@ -36,7 +36,6 @@ export async function GET(req: NextRequest) {
 			Photo.find(query)
 				.populate('uploadedBy', 'name avatar')
 				.populate('taggedUsers', 'name avatar')
-				.populate('likes', 'name avatar')
 				.sort({ createdAt: -1 })
 				.skip(skip)
 				.limit(limit)

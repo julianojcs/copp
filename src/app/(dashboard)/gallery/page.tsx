@@ -24,7 +24,6 @@ interface Photo {
 	location?: string
 	takenAt?: string
 	uploadedBy: PhotoUser
-	likes: PhotoUser[]
 	createdAt: string
 }
 
@@ -138,27 +137,6 @@ export default function GalleryPage() {
 		fetchPhotos(1)
 	}
 
-	const handleLike = async (photoId: string) => {
-		try {
-			const response = await fetch(`/api/photos/${photoId}/like`, {
-				method: 'POST',
-			})
-
-			if (response.ok) {
-				const { photo: updatedPhoto } = await response.json()
-
-				setPhotos((prevPhotos) =>
-					prevPhotos.map((p) =>
-						p._id === photoId ? { ...p, likes: updatedPhoto.likes } : p
-					)
-				)
-			}
-		} catch (err) {
-			console.error('Failed to like photo:', err)
-			toast.error('Erro ao curtir a foto')
-		}
-	}
-
 	const handleDelete = async (photoId: string) => {
 		try {
 			const response = await fetch(`/api/photos/${photoId}`, {
@@ -215,7 +193,6 @@ export default function GalleryPage() {
 							<PhotoCard
 								key={photo._id}
 								photo={photo}
-								onLike={handleLike}
 								onDelete={handleDelete}
 							/>
 						))}

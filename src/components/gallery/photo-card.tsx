@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart, MapPin, Calendar, Trash2, User } from 'lucide-react'
+import { MapPin, Calendar, Trash2 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,10 @@ import {
 	DialogTitle,
 	DialogVisuallyHidden,
 } from '@/components/ui/dialog'
-import { cn } from '@/lib/utils'
+import { REACTION_TARGET_TYPES, USER_ROLES } from '@/lib/constants'
+import { formatDateOnly } from '@/lib/date-utils'
+import { ReactionPicker } from '@/components/social/reaction-picker'
+import { CommentThread } from '@/components/social/comment-thread'
 
 interface PhotoUser {
 	_id: string
@@ -35,62 +38,40 @@ interface PhotoCardProps {
 		location?: string
 		takenAt?: string
 		uploadedBy: PhotoUser
-		likes: PhotoUser[]
 		createdAt: string
 	}
-	onLike: (photoId: string) => void
 	onDelete?: (photoId: string) => void
 }
 
-export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
+function getInitials(name: string) {
+	return name
+		.split(' ')
+		.map((n) => n[0])
+		.join('')
+		.toUpperCase()
+		.slice(0, 2)
+}
+
+export function PhotoCard({ photo, onDelete }: PhotoCardProps) {
 	const { data: session } = useSession()
-	const [isLiking, setIsLiking] = useState(false)
 	const [isDeleting, setIsDeleting] = useState(false)
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 	const [showFullImage, setShowFullImage] = useState(false)
 
-	const isLiked = photo.likes.some((like) => like._id === session?.user?.id)
 	const isOwner = photo.uploadedBy._id === session?.user?.id
-	const isCoordinator = session?.user?.role === 'coordenador' || session?.user?.role === 'admin'
+	const isCoordinator =
+		session?.user?.role === USER_ROLES.COORDENADOR ||
+		session?.user?.role === USER_ROLES.ADMIN
 
-	const handleLike = async () => {
-		if (isLiking) return
-		setIsLiking(true)
-
-		try {
-			await onLike(photo._id)
-		} finally {
-			setIsLiking(false)
-		}
-	}
-
-	const handleDelete = async () => {
+	async function handleDelete() {
 		if (isDeleting) return
 		setIsDeleting(true)
-
 		try {
 			await onDelete?.(photo._id)
 			setShowDeleteDialog(false)
 		} finally {
 			setIsDeleting(false)
 		}
-	}
-
-	const getInitials = (name: string) => {
-		return name
-			.split(' ')
-			.map((n) => n[0])
-			.join('')
-			.toUpperCase()
-			.slice(0, 2)
-	}
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-		})
 	}
 
 	return (
@@ -103,23 +84,23 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 						onKeyDown={(e) => e.key === 'Enter' && setShowFullImage(true)}
 						tabIndex={0}
 						role="button"
-						aria-label={`View ${photo.title || 'photo'}`}
+						aria-label={`Abrir ${photo.title || 'foto'} em tela cheia`}
 					>
 						<Image
 							src={photo.thumbnailUrl || photo.url}
-							alt={photo.title || 'Trip photo'}
+							alt={photo.title || 'Foto da turma'}
 							fill
 							className="object-cover transition-transform duration-300 group-hover:scale-105"
 							sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
 						/>
-						<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+						<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 					</div>
 
-					<div className="p-4 space-y-3">
+					<div className="space-y-3 p-4">
 						<div className="flex items-center justify-between">
 							<Link
 								href={`/colleagues/${photo.uploadedBy._id}`}
-								className="flex items-center gap-2 group/user"
+								className="group/user flex items-center gap-2"
 							>
 								<Avatar className="h-8 w-8">
 									<AvatarImage
@@ -130,51 +111,30 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 										{getInitials(photo.uploadedBy.name)}
 									</AvatarFallback>
 								</Avatar>
-								<span className="text-sm font-medium group-hover/user:text-primary transition-colors">
+								<span className="text-sm font-medium transition-colors group-hover/user:text-primary">
 									{photo.uploadedBy.name}
 								</span>
 							</Link>
 
-							<div className="flex items-center gap-1">
+							{(isOwner || isCoordinator) && onDelete && (
 								<Button
 									variant="ghost"
 									size="icon"
-									className="h-8 w-8"
-									onClick={handleLike}
-									disabled={isLiking}
-									aria-label={isLiked ? 'Unlike photo' : 'Like photo'}
+									className="h-8 w-8 text-destructive hover:text-destructive"
+									onClick={() => setShowDeleteDialog(true)}
+									aria-label="Excluir foto"
 								>
-									<Heart
-										className={cn(
-											'h-4 w-4 transition-all',
-											isLiked && 'fill-red-500 text-red-500'
-										)}
-									/>
+									<Trash2 className="h-4 w-4" />
 								</Button>
-								<span className="text-sm text-muted-foreground">
-									{photo.likes.length}
-								</span>
-
-								{(isOwner || isCoordinator) && onDelete && (
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-8 w-8 text-destructive hover:text-destructive"
-										onClick={() => setShowDeleteDialog(true)}
-										aria-label="Delete photo"
-									>
-										<Trash2 className="h-4 w-4" />
-									</Button>
-								)}
-							</div>
+							)}
 						</div>
 
 						{photo.title && (
-							<p className="font-medium text-sm line-clamp-1">{photo.title}</p>
+							<p className="line-clamp-1 text-sm font-medium">{photo.title}</p>
 						)}
 
 						{photo.description && (
-							<p className="text-sm text-muted-foreground line-clamp-2">
+							<p className="line-clamp-2 text-sm text-muted-foreground">
 								{photo.description}
 							</p>
 						)}
@@ -182,16 +142,31 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 						<div className="flex items-center gap-4 text-xs text-muted-foreground">
 							{photo.location && (
 								<span className="flex items-center gap-1">
-									<MapPin className="h-3 w-3" />
+									<MapPin className="h-3 w-3" aria-hidden />
 									{photo.location}
 								</span>
 							)}
 							{photo.takenAt && (
 								<span className="flex items-center gap-1">
-									<Calendar className="h-3 w-3" />
-									{formatDate(photo.takenAt)}
+									<Calendar className="h-3 w-3" aria-hidden />
+									{formatDateOnly(photo.takenAt, {
+										day: '2-digit',
+										month: 'short',
+										year: 'numeric',
+									})}
 								</span>
 							)}
+						</div>
+
+						<div className="space-y-2 border-t pt-3">
+							<ReactionPicker
+								targetType={REACTION_TARGET_TYPES.PHOTO}
+								targetId={photo._id}
+							/>
+							<CommentThread
+								targetType={REACTION_TARGET_TYPES.PHOTO}
+								targetId={photo._id}
+							/>
 						</div>
 					</div>
 				</CardContent>
@@ -199,20 +174,20 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 
 			{/* Full Image Dialog */}
 			<Dialog open={showFullImage} onOpenChange={setShowFullImage}>
-				<DialogContent className="max-w-4xl p-0 overflow-hidden">
+				<DialogContent className="max-w-4xl overflow-hidden p-0">
 					<DialogVisuallyHidden>
-						<DialogTitle>{photo.title || 'Trip photo'}</DialogTitle>
+						<DialogTitle>{photo.title || 'Foto'}</DialogTitle>
 					</DialogVisuallyHidden>
 					<div className="relative aspect-video">
 						<Image
 							src={photo.url}
-							alt={photo.title || 'Trip photo'}
+							alt={photo.title || 'Foto'}
 							fill
 							className="object-contain"
 							sizes="100vw"
 						/>
 					</div>
-					<div className="p-4 space-y-2">
+					<div className="space-y-3 p-4">
 						<div className="flex items-center gap-2">
 							<Avatar className="h-8 w-8">
 								<AvatarImage
@@ -220,7 +195,7 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 									alt={photo.uploadedBy.name}
 								/>
 								<AvatarFallback>
-									<User className="h-4 w-4" />
+									{getInitials(photo.uploadedBy.name)}
 								</AvatarFallback>
 							</Avatar>
 							<span className="font-medium">{photo.uploadedBy.name}</span>
@@ -229,6 +204,17 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 						{photo.description && (
 							<p className="text-muted-foreground">{photo.description}</p>
 						)}
+						<div className="space-y-3 border-t pt-3">
+							<ReactionPicker
+								targetType={REACTION_TARGET_TYPES.PHOTO}
+								targetId={photo._id}
+							/>
+							<CommentThread
+								targetType={REACTION_TARGET_TYPES.PHOTO}
+								targetId={photo._id}
+								defaultCollapsed={false}
+							/>
+						</div>
 					</div>
 				</DialogContent>
 			</Dialog>
@@ -237,10 +223,10 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete photo?</DialogTitle>
+						<DialogTitle>Excluir foto?</DialogTitle>
 						<DialogDescription>
-							This action cannot be undone. This will permanently delete the
-							photo from the gallery.
+							Esta ação não pode ser desfeita. A foto será removida permanentemente
+							da galeria.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
@@ -249,14 +235,14 @@ export function PhotoCard({ photo, onLike, onDelete }: PhotoCardProps) {
 							onClick={() => setShowDeleteDialog(false)}
 							disabled={isDeleting}
 						>
-							Cancel
+							Cancelar
 						</Button>
 						<Button
 							variant="destructive"
 							onClick={handleDelete}
 							disabled={isDeleting}
 						>
-							{isDeleting ? 'Deleting...' : 'Delete'}
+							{isDeleting ? 'Excluindo…' : 'Excluir'}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
