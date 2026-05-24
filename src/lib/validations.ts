@@ -297,3 +297,24 @@ export const messageListQuerySchema = z.object({
 export type MessageCreateInput = z.infer<typeof messageCreateSchema>
 export type MessageUpdateInput = z.infer<typeof messageUpdateSchema>
 export type MessageListQuery = z.infer<typeof messageListQuerySchema>
+
+// Timeline (feed aggregating multiple event types)
+const timelineLimitSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(50)
+  .default(20)
+
+const timelineCursorSchema = z
+  .string()
+  .datetime({ offset: true })
+  .optional()
+  .or(z.literal('').transform(() => undefined))
+
+export const timelineQuerySchema = z.object({
+  cursor: timelineCursorSchema,
+  limit: timelineLimitSchema.optional(),
+})
+
+export type TimelineQuery = z.infer<typeof timelineQuerySchema>

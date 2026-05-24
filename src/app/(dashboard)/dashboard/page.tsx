@@ -6,9 +6,9 @@ import { Photo } from '@/models/photo'
 import {
 	StatsRail,
 	RecentMembersCard,
-	TimelinePlaceholder,
 	type RecentMember,
 } from '@/components/dashboard'
+import { Timeline } from '@/components/timeline'
 
 export const metadata: Metadata = {
 	title: 'Dashboard',
@@ -70,7 +70,7 @@ export default async function DashboardPage() {
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
 				{/* Timeline — mobile: middle (order-2); desktop: main column */}
 				<main className="order-2 min-w-0 lg:order-0 lg:col-span-8 lg:col-start-1 lg:row-start-1">
-					<TimelinePlaceholder />
+					<Timeline />
 				</main>
 
 				{/* Sidebar wrapper: Stats + Recent share a single sticky container on desktop */}
