@@ -121,8 +121,11 @@ export function computeScore(args: {
 	const decay = hoursOld / 12
 	const engagement =
 		(args.reactionsCount ?? 0) + (args.commentsCount ?? 0) * 2
-	if (engagement === 0) return -decay
-	return Math.log10(engagement + 1) - decay
+	const score = engagement === 0
+		? -decay
+		: Math.log10(engagement + 1) - decay
+	// Normalize -0 → 0 so equality checks on the zero score behave predictably.
+	return score === 0 ? 0 : score
 }
 
 export const TIMELINE_DEFAULT_LIMIT = 20
