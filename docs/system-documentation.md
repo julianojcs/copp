@@ -237,36 +237,61 @@ UI: card "Alterar Senha" em `src/app/(dashboard)/profile/page.tsx` consumindo o 
   - Projeto `dom`: `*.test.tsx` em ambiente happy-dom com Testing Library; setup em `src/test/setup-dom.ts`
 - Convencoes: as asserts seguem o convencional Vitest (`toBe`, `toMatchObject`, `toHaveBeenCalledTimes`, `toBeTruthy`); `toBeInTheDocument`/`toBeDisabled` (jest-dom) NAO sao usados - prefira `screen.queryByText(...)` e `element.hasAttribute(...)` para a11y/state.
 
-### Cobertura atual (162 testes em 15 arquivos)
+### Cobertura atual (354 testes em 36 arquivos)
 
 **Unit (logica pura)**
-- `src/lib/__tests__/validations.test.ts` - whatsapp, fullName, state, city, lotacaoId, password, register, profile, changePassword (24 testes)
-- `src/lib/constants/__tests__/brazilian-states.test.ts` - BRAZILIAN_STATES, VALID_UFS, getStateName
+- `src/lib/__tests__/validations.test.ts` - whatsapp, fullName, state, city, lotacaoId, password, register, profile, changePassword
 - `src/lib/__tests__/permissions.test.ts` - canApprove/canReject/canEdit*/canAssignAdminRole
 - `src/lib/__tests__/app-settings.test.ts` - cache + invalidate + fallback quando DB falha
-- `src/models/__tests__/lotacao.test.ts` - validacao do schema (sigla uppercase, uf contra VALID_UFS, tipo enum, todos os tipos validos, campos required)
+- `src/lib/__tests__/admin-notifications.test.ts` - lookup de admins ativos + envio resiliente
+- `src/lib/__tests__/date-utils.test.ts` - `formatInTimezone`, `formatDateOnly`, `formatRelativeTime` em pt-BR
+- `src/lib/__tests__/timeline-types.test.ts` - `computeScore` (decaimento, boost de engajamento, peso 2x para comentarios, normalizacao de -0)
+- `src/lib/constants/__tests__/brazilian-states.test.ts` - BRAZILIAN_STATES, VALID_UFS, getStateName
+- `src/models/__tests__/lotacao.test.ts` - validacao do schema
+- `src/models/__tests__/reaction.test.ts` - schema polimorfico, indice unico, enums (11 testes)
+- `src/models/__tests__/comment.test.ts` - schema polimorfico, soft delete, body trim, indices (12 testes)
+- `src/models/__tests__/message.test.ts` - schema com imagem opcional, soft delete, indices, text search (11 testes)
 
 **Integration (rotas de API com mocks)**
-- `src/app/api/auth/register/__tests__/route.test.ts` - validacao, criacao com lotacao normalizada, conflito de email, falha de email opcional
+- `src/app/api/auth/register/__tests__/route.test.ts` - validacao, criacao com lotacao normalizada, conflito de email
 - `src/app/api/auth/complete-profile/__tests__/route.test.ts` - validacao, role=admin sem cargo, resolucao de lotacao, conflitos
-- `src/app/api/users/[id]/__tests__/route.test.ts` - 401/403, owner vs admin, validacao, resolucao de lotacao, profileCompleted, troca de email com token e envio
-- `src/app/api/users/[id]/change-password/__tests__/route.test.ts` - 401/403/404, OAuth-only, senha incorreta, sucesso
-- `src/app/api/admin/users/[id]/__tests__/route.test.ts` - 401/403, whitelist de campos (state/city dropados), resolucao de lotacaoId, validacao de id, regra de admin role
-- `src/app/api/lotacoes/__tests__/route.test.ts` - listagem padrao, filtro por uf (uppercased + UF invalida 400), filtro por tipo, busca q em sigla/nome com escape de regex, limit clamping, erro 500
+- `src/app/api/users/[id]/__tests__/route.test.ts` - 401/403, owner vs admin, validacao, resolucao de lotacao, profileCompleted, troca de email
+- `src/app/api/users/[id]/change-password/__tests__/route.test.ts` - 401/403/404, OAuth-only, senha incorreta
+- `src/app/api/admin/users/[id]/__tests__/route.test.ts` - 401/403, whitelist de campos, resolucao de lotacaoId
+- `src/app/api/lotacoes/__tests__/route.test.ts` - listagem, filtros por uf/tipo/q, limit clamping, 500
+- `src/app/api/reactions/__tests__/route.test.ts` - POST/DELETE/GET, 401/400/404, target photo + message, soft-delete blocking, agregacao zero-counts
+- `src/app/api/comments/__tests__/route.test.ts` - POST 201, GET paginado, masking de soft-deleted, projecao segura de autor, limit cap, target message
+- `src/app/api/comments/[id]/__tests__/route.test.ts` - PATCH author-only, 410 em deletado, DELETE autor/admin/idempotente
+- `src/app/api/messages/__tests__/route.test.ts` - POST text/image, GET com agregacao single-pass de counts, masking soft-deleted, nextCursor
+- `src/app/api/messages/[id]/__tests__/route.test.ts` - GET populado, PATCH author-only, DELETE autor/admin
+- `src/app/api/timeline/__tests__/route.test.ts` - 5 tipos de evento mesclados + ranking por score, cursor por candidate-pool, masking, paralelismo das 5 queries
 
-**UI (componentes React)**
+**UI (componentes React + hooks via Testing Library)**
 - `src/hooks/__tests__/use-ibge.test.tsx` - fetch states/cities, errors, init UF, clear UF
+- `src/hooks/__tests__/use-timeline.test.tsx` - first-page on mount, loadNext com cursor, prepend sem fetch, error handling
 - `src/components/profile/__tests__/state-select.test.tsx` - estados Default/Loading/Disabled/Empty
-- `src/components/profile/__tests__/city-select.test.tsx` - estados Default/Loading/Disabled/Empty + dependencia em hasState
-- `src/components/profile/__tests__/lotacao-select.test.tsx` - placeholder, label do selecionado, abertura do dialog, filtro por sigla, selecao, clear, erro, empty state, disabled
+- `src/components/profile/__tests__/city-select.test.tsx` - estados + dependencia em hasState
+- `src/components/profile/__tests__/lotacao-select.test.tsx` - placeholder, dialog, filtro, selecao, clear, erro, empty state
+- `src/components/dashboard/__tests__/stats-rail.test.tsx` - 3 cards (Total/Fotos/Acoes), links, zero-values
+- `src/components/dashboard/__tests__/recent-members-card.test.tsx` - empty state, dual mobile/desktop render, cargo+lotacao subtitle, role fallback
+- `src/components/gallery/__tests__/photo-card.test.tsx` - metadata renderizado, ausencia do heart legado, ReactionPicker presente, CommentThread colapsado, delete permission rules + dialog confirm
+- `src/components/social/__tests__/reaction-picker.test.tsx` - render label, contagens, toggle POST/DELETE
+- `src/components/social/__tests__/comment-thread.test.tsx` - collapsed toggle, count, prefetched render, lazy load on expand, optimistic prepend
+- `src/components/social/__tests__/message-card.test.tsx` - header, body, editado flag, soft-deleted sem footer
+- `src/components/social/__tests__/message-composer.test.tsx` - botao disabled vazio, contador de caracteres, submit POST + trim, error toast
+- `src/components/timeline/__tests__/timeline.test.tsx` - empty state, 5 tipos de event render, error state, end-of-list hint
+
+### E2E
+
+Nao ha infraestrutura E2E automatizada. O fluxo de smoke-test e feito manualmente via Playwright MCP durante o desenvolvimento (login + dashboard + composer + galeria) e documentado em cada PR. Para automatizar: instalar `@playwright/test`, adicionar projetos no `vitest.config.ts` ou um runner dedicado.
 
 ### Principios aplicados (F.I.R.S.T.)
 
-- **Fast**: testes unitarios em milissegundos; sem rede real (`fetch` e `bcrypt` mockados); models usam `validateSync()` sem conexao com Mongo
-- **Independent**: cada `it()` faz reset de mocks em `beforeEach`; nenhuma fixture compartilhada mutavel
-- **Repeatable**: sem dependencia de hora/rede; uso de fixtures determinadas (`VALID_ID`, `sampleLotacao`)
-- **Self-checking**: assertivas explicitas (`toBe`, `toMatch`, `toMatchObject`, `toHaveBeenCalledTimes`, `hasAttribute`)
-- **Timely**: novos testes acompanham o refator no mesmo PR/commit; CSV corrections em `seed-lotacoes` cobertos via testes do model + integracao
+- **Fast**: 354 testes em ~14s (~40ms/teste); sem rede real (`fetch` e `bcrypt` mockados); models usam `validateSync()` sem conexao com Mongo; pipelines Mongoose mockados via `vi.mock`
+- **Independent**: cada `it()` faz `mockReset()`/`mockClear()` em `beforeEach`; mocks compartilhados (`fetchMock`, `authMock`) sao reinicializados; sem fixture mutavel global. `vi.hoisted` usado quando o mock precisa ser referenciado pelo `vi.mock` (ex.: `toastMock` em MessageComposer)
+- **Repeatable**: testes que dependem de tempo passam `now` como argumento explicito (`computeScore`, `formatRelativeTime`); testes de timeline que usam `new Date()` em fixtures comparam apenas ordem relativa, nao valores absolutos
+- **Self-checking**: assertivas explicitas (`toBe`, `toMatchObject`, `toHaveBeenCalledWith`, `hasAttribute`, `toBeCloseTo` para floats); sem `console.log` para inspecao manual
+- **Timely**: testes escritos junto com o codigo (TDD: model test red → schema → green; route test red → handler → green); o ciclo `npm test` foi parte de cada commit das issues #7-#12
 
 ## Scripts
 
