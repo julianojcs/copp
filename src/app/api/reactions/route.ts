@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/db'
 import { Reaction } from '@/models/reaction'
 import { Photo } from '@/models/photo'
+import { Message } from '@/models/message'
 import {
 	REACTION_TYPES,
 	REACTION_TARGET_TYPES,
@@ -17,11 +18,10 @@ import {
 } from '@/lib/validations'
 
 /**
- * Verifies that the polymorphic target exists.
+ * Verifies that the polymorphic target exists and is reactable.
  *
  * - `photo`: looks up the Photo collection.
- * - `message`: not yet supported (Message model lands in issue #10).
- *   Returns `false` to surface a 404 to clients in the meantime.
+ * - `message`: looks up the Message collection and rejects soft-deleted ones.
  */
 async function targetExists(
 	targetType: ReactionTargetType,
@@ -30,6 +30,12 @@ async function targetExists(
 	if (targetType === REACTION_TARGET_TYPES.PHOTO) {
 		const photo = await Photo.findById(targetId).select('_id').lean()
 		return photo !== null
+	}
+	if (targetType === REACTION_TARGET_TYPES.MESSAGE) {
+		const message = await Message.findById(targetId)
+			.select('_id deletedAt')
+			.lean<{ _id: unknown; deletedAt?: Date } | null>()
+		return message !== null && !message.deletedAt
 	}
 	return false
 }

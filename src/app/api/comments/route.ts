@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/db'
 import { Comment } from '@/models/comment'
 import { Photo } from '@/models/photo'
+import { Message } from '@/models/message'
 import {
 	COMMENT_TARGET_TYPES,
 	COMMENT_LIST_DEFAULT_LIMIT,
@@ -15,11 +16,10 @@ import {
 } from '@/lib/validations'
 
 /**
- * Verifies that the polymorphic target exists.
+ * Verifies that the polymorphic target exists and is commentable.
  *
  * - `photo`: looks up the Photo collection.
- * - `message`: not yet supported (Message model lands in issue #10).
- *   Returns `false` so clients get a 404 in the meantime.
+ * - `message`: looks up the Message collection and rejects soft-deleted ones.
  */
 async function targetExists(
 	targetType: CommentTargetType,
@@ -28,6 +28,12 @@ async function targetExists(
 	if (targetType === COMMENT_TARGET_TYPES.PHOTO) {
 		const photo = await Photo.findById(targetId).select('_id').lean()
 		return photo !== null
+	}
+	if (targetType === COMMENT_TARGET_TYPES.MESSAGE) {
+		const message = await Message.findById(targetId)
+			.select('_id deletedAt')
+			.lean<{ _id: unknown; deletedAt?: Date } | null>()
+		return message !== null && !message.deletedAt
 	}
 	return false
 }

@@ -9,6 +9,9 @@ import {
   COMMENT_BODY_MAX_LENGTH,
   COMMENT_LIST_DEFAULT_LIMIT,
   COMMENT_LIST_MAX_LIMIT,
+  MESSAGE_BODY_MAX_LENGTH,
+  MESSAGE_LIST_DEFAULT_LIMIT,
+  MESSAGE_LIST_MAX_LIMIT,
 } from '@/lib/constants'
 import { VALID_UFS } from '@/lib/constants/brazilian-states'
 
@@ -246,3 +249,51 @@ export const commentListQuerySchema = z.object({
 export type CommentCreateInput = z.infer<typeof commentCreateSchema>
 export type CommentUpdateInput = z.infer<typeof commentUpdateSchema>
 export type CommentListQuery = z.infer<typeof commentListQuerySchema>
+
+// Messages (text post + optional image)
+export const messageBodySchema = z
+  .string()
+  .trim()
+  .min(1, 'Mensagem não pode ser vazia')
+  .max(
+    MESSAGE_BODY_MAX_LENGTH,
+    `Mensagem não pode exceder ${MESSAGE_BODY_MAX_LENGTH} caracteres`,
+  )
+
+export const messageImageSchema = z.object({
+  url: z.string().url('URL da imagem inválida'),
+  publicId: z.string().min(1, 'publicId da imagem é obrigatório'),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+})
+
+export const messageCreateSchema = z.object({
+  body: messageBodySchema,
+  image: messageImageSchema.optional(),
+})
+
+export const messageUpdateSchema = z.object({
+  body: messageBodySchema,
+})
+
+const messageLimitSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(MESSAGE_LIST_MAX_LIMIT)
+  .default(MESSAGE_LIST_DEFAULT_LIMIT)
+
+const messageCursorSchema = z
+  .string()
+  .datetime({ offset: true })
+  .optional()
+  .or(z.literal('').transform(() => undefined))
+
+export const messageListQuerySchema = z.object({
+  cursor: messageCursorSchema,
+  limit: messageLimitSchema.optional(),
+})
+
+export type MessageCreateInput = z.infer<typeof messageCreateSchema>
+export type MessageUpdateInput = z.infer<typeof messageUpdateSchema>
+export type MessageListQuery = z.infer<typeof messageListQuerySchema>

@@ -5,6 +5,7 @@ const authMock = vi.fn()
 const connectDBMock = vi.fn().mockResolvedValue({})
 
 const photoFindByIdMock = vi.fn()
+const messageFindByIdMock = vi.fn()
 
 const reactionFindOneAndUpdateMock = vi.fn()
 const reactionDeleteOneMock = vi.fn()
@@ -17,6 +18,13 @@ vi.mock('@/models/photo', () => ({
 	Photo: {
 		findById: (...a: unknown[]) => ({
 			select: () => ({ lean: () => photoFindByIdMock(...a) }),
+		}),
+	},
+}))
+vi.mock('@/models/message', () => ({
+	Message: {
+		findById: (...a: unknown[]) => ({
+			select: () => ({ lean: () => messageFindByIdMock(...a) }),
 		}),
 	},
 }))
@@ -64,6 +72,7 @@ const sessionApproved = {
 beforeEach(() => {
 	authMock.mockReset()
 	photoFindByIdMock.mockReset()
+	messageFindByIdMock.mockReset()
 	reactionFindOneAndUpdateMock.mockReset()
 	reactionDeleteOneMock.mockReset()
 	reactionFindOneMock.mockReset()
@@ -72,6 +81,7 @@ beforeEach(() => {
 	// defaults
 	authMock.mockResolvedValue(sessionApproved)
 	photoFindByIdMock.mockResolvedValue({ _id: VALID_TARGET_ID })
+	messageFindByIdMock.mockResolvedValue({ _id: VALID_TARGET_ID })
 	reactionFindOneAndUpdateMock.mockResolvedValue({
 		_id: 'r1',
 		userId: VALID_USER_ID,
@@ -136,7 +146,8 @@ describe('POST /api/reactions', () => {
 		expect(reactionFindOneAndUpdateMock).not.toHaveBeenCalled()
 	})
 
-	it('returns 404 for message target (Message model not yet implemented — issue #10)', async () => {
+	it('returns 404 when target message does not exist', async () => {
+		messageFindByIdMock.mockResolvedValueOnce(null)
 		const res = await POST(
 			makeRequest('POST', {
 				body: { targetType: 'message', targetId: VALID_TARGET_ID, type: 'love' },
@@ -144,6 +155,29 @@ describe('POST /api/reactions', () => {
 		)
 		expect(res.status).toBe(404)
 		expect(reactionFindOneAndUpdateMock).not.toHaveBeenCalled()
+	})
+
+	it('returns 404 when target message is soft-deleted', async () => {
+		messageFindByIdMock.mockResolvedValueOnce({
+			_id: VALID_TARGET_ID,
+			deletedAt: new Date(),
+		})
+		const res = await POST(
+			makeRequest('POST', {
+				body: { targetType: 'message', targetId: VALID_TARGET_ID, type: 'love' },
+			}) as never,
+		)
+		expect(res.status).toBe(404)
+	})
+
+	it('upserts a reaction targeting a message', async () => {
+		const res = await POST(
+			makeRequest('POST', {
+				body: { targetType: 'message', targetId: VALID_TARGET_ID, type: 'love' },
+			}) as never,
+		)
+		expect(res.status).toBe(200)
+		expect(reactionFindOneAndUpdateMock).toHaveBeenCalled()
 	})
 
 	it('upserts the reaction by (userId, targetType, targetId)', async () => {

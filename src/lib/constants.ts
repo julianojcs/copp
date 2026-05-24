@@ -71,3 +71,7 @@ export const COMMENT_BODY_MAX_LENGTH = 1000
 export const COMMENT_LIST_DEFAULT_LIMIT = 20
 export const COMMENT_LIST_MAX_LIMIT = 50
 
+// Messages (text post with optional image attachment)
+export const MESSAGE_BODY_MAX_LENGTH = 2000
+export const MESSAGE_LIST_DEFAULT_LIMIT = 20
+export const MESSAGE_LIST_MAX_LIMIT = 50
