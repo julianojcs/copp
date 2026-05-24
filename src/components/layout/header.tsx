@@ -84,7 +84,10 @@ export function Header() {
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
+              {/* suppressHydrationWarning: Radix gera aria-controls via useId, que pode
+                  divergir entre SSR e CSR no React 19 + Next 16 com streaming. O ID se
+                  estabiliza após a hidratação e aponta corretamente para o conteúdo. */}
+              <Button variant="ghost" size="icon" suppressHydrationWarning>
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Abrir menu</span>
               </Button>

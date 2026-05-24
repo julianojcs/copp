@@ -42,10 +42,8 @@ scripts/sync-vercel-env.sh
 next-env.d.ts
 
 # Claude Code / agent harness — local state
-.claude/settings.local.json
-.claude/scheduled_tasks.lock
-.claude/worktrees/
-.claude/plans/
+.claude/
+.agents/
 .superpowers/
 
 # Playwright MCP — runtime console/page snapshots

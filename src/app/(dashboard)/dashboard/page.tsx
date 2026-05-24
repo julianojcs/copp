@@ -61,23 +61,30 @@ export default async function DashboardPage() {
 				</p>
 			</div>
 
-			{/* Main grid: timeline (col-span-8) + sidebar (col-span-4) on desktop;
-			    stacked with explicit order on mobile so new members go below timeline */}
+			{/* Main grid: timeline (col-span-8) + sidebar (col-span-4) on desktop.
+			    Mobile uses `display: contents` on the sidebar so Stats and Recent
+			    members become direct grid items, interleaved with the timeline via
+			    `order`. Desktop turns the sidebar into a real flex container that
+			    sticks as a single unit — preventing Recent Members from overlapping
+			    Stats while the timeline scrolls. */}
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-				{/* Stats — mobile: top (order-1); desktop: top of sidebar (row 1, col 9-12) */}
-				<div className="order-1 lg:order-0 lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:sticky lg:top-20 lg:self-start">
-					<StatsRail totalUsers={totalUsers} totalPhotos={totalPhotos} />
-				</div>
-
-				{/* Timeline — mobile: middle (order-2); desktop: main column spanning both rows */}
-				<main className="order-2 min-w-0 lg:order-0 lg:col-span-8 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+				{/* Timeline — mobile: middle (order-2); desktop: main column */}
+				<main className="order-2 min-w-0 lg:order-0 lg:col-span-8 lg:col-start-1 lg:row-start-1">
 					<TimelinePlaceholder />
 				</main>
 
-				{/* Recent members — mobile: bottom (order-3); desktop: below stats in sidebar */}
-				<div className="order-3 lg:order-0 lg:col-span-4 lg:col-start-9 lg:row-start-2">
-					<RecentMembersCard members={recentUsers} />
-				</div>
+				{/* Sidebar wrapper: Stats + Recent share a single sticky container on desktop */}
+				<aside className="contents lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:sticky lg:top-20 lg:flex lg:flex-col lg:gap-6 lg:self-start">
+					{/* Stats — mobile: top (order-1) */}
+					<div className="order-1 lg:order-0">
+						<StatsRail totalUsers={totalUsers} totalPhotos={totalPhotos} />
+					</div>
+
+					{/* Recent members — mobile: bottom (order-3) */}
+					<div className="order-3 lg:order-0">
+						<RecentMembersCard members={recentUsers} />
+					</div>
+				</aside>
 			</div>
 		</div>
 	)
