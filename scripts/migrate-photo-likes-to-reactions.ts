@@ -21,7 +21,10 @@ loadEnv({ path: '.env.local' })
 loadEnv()
 
 import mongoose, { Types } from 'mongoose'
-import { Photo } from '../src/models/photo'
+// NOTE: this script reads `photos.likes` via the raw collection so it
+// remains usable AFTER issue #12 removed the `likes` field from the
+// Photo Mongoose schema. The data may still exist in MongoDB; this
+// migration backfills it into the Reaction collection.
 import { Reaction } from '../src/models/reaction'
 import {
 	REACTION_TYPES,
@@ -34,6 +37,7 @@ interface MigrationStats {
 	reactionsCreated: number
 	duplicatesSkipped: number
 	errors: number
+	likesFieldDropped: number
 }
 
 async function main() {
@@ -41,8 +45,13 @@ async function main() {
 	if (!uri) throw new Error('MONGODB_URI not set')
 
 	const dryRun = process.argv.includes('--dry-run')
+	const cleanup = process.argv.includes('--cleanup')
 
-	console.log(`\n📸 Photo.likes → Reaction migration${dryRun ? ' (DRY RUN)' : ''}\n`)
+	console.log(
+		`\n📸 Photo.likes → Reaction migration${dryRun ? ' (DRY RUN)' : ''}${
+			cleanup ? ' + cleanup ($unset likes)' : ''
+		}\n`,
+	)
 
 	await mongoose.connect(uri)
 
@@ -52,6 +61,7 @@ async function main() {
 		reactionsCreated: 0,
 		duplicatesSkipped: 0,
 		errors: 0,
+		likesFieldDropped: 0,
 	}
 
 	type PhotoLite = {
@@ -60,9 +70,17 @@ async function main() {
 		createdAt: Date
 	}
 
-	const cursor = Photo.find({ likes: { $exists: true, $ne: [] } })
-		.select('_id likes createdAt')
-		.cursor() as unknown as AsyncIterable<PhotoLite>
+	const db = mongoose.connection.db
+	if (!db) throw new Error('MongoDB connection has no `db` handle')
+
+	// Raw collection access — bypasses the Mongoose schema (which no
+	// longer declares `likes`) so we can still read the legacy field
+	// from any document that still has it.
+	const cursor = db
+		.collection<PhotoLite>('photos')
+		.find({ likes: { $exists: true, $ne: [] } }, {
+			projection: { _id: 1, likes: 1, createdAt: 1 },
+		})
 
 	for await (const photo of cursor) {
 		stats.photosScanned += 1
@@ -97,16 +115,36 @@ async function main() {
 		}
 	}
 
+	// Cleanup pass: $unset the legacy `likes` field from every photo.
+	// Only runs with --cleanup AND not --dry-run. Backfill must have
+	// succeeded with zero errors first.
+	if (cleanup && !dryRun && stats.errors === 0) {
+		const result = await db
+			.collection('photos')
+			.updateMany(
+				{ likes: { $exists: true } },
+				{ $unset: { likes: '' } },
+			)
+		stats.likesFieldDropped = result.modifiedCount
+	}
+
 	await mongoose.disconnect()
 
 	console.log('\n✅ Done')
-	console.log('  photos scanned     :', stats.photosScanned)
-	console.log('  likes found        :', stats.likesFound)
-	console.log('  reactions created  :', stats.reactionsCreated)
-	console.log('  duplicates skipped :', stats.duplicatesSkipped)
-	console.log('  errors             :', stats.errors)
+	console.log('  photos scanned       :', stats.photosScanned)
+	console.log('  likes found          :', stats.likesFound)
+	console.log('  reactions created    :', stats.reactionsCreated)
+	console.log('  duplicates skipped   :', stats.duplicatesSkipped)
+	console.log('  errors               :', stats.errors)
+	if (cleanup && !dryRun) {
+		console.log('  likes field dropped  :', stats.likesFieldDropped)
+	}
 	if (dryRun) {
 		console.log('\n(dry run — no writes performed)')
+	} else if (!cleanup) {
+		console.log(
+			'\nℹ️  Re-run with `--cleanup` to also $unset the legacy `likes` field from photos.',
+		)
 	}
 }
 

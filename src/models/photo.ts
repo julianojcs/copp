@@ -1,7 +1,11 @@
 import { Schema, model, models, Document, Types } from 'mongoose'
 
 /**
- * Photo document interface for MongoDB
+ * Photo document interface for MongoDB.
+ *
+ * Reactions are tracked polymorphically by the Reaction collection
+ * (`targetType: 'photo'`, `targetId: photo._id`). The legacy
+ * `likes[]` field was retired in issue #12.
  */
 export interface IPhoto extends Document {
 	_id: Types.ObjectId
@@ -14,7 +18,6 @@ export interface IPhoto extends Document {
 	location?: string
 	takenAt?: Date
 	taggedUsers: Types.ObjectId[]
-	likes: Types.ObjectId[]
 	isPublic: boolean
 	createdAt: Date
 	updatedAt: Date
@@ -62,12 +65,6 @@ const PhotoSchema = new Schema<IPhoto>(
 			type: Date,
 		},
 		taggedUsers: [
-			{
-				type: Schema.Types.ObjectId,
-				ref: 'User',
-			},
-		],
-		likes: [
 			{
 				type: Schema.Types.ObjectId,
 				ref: 'User',
