@@ -90,6 +90,9 @@ Reacao emoji polimorfica (estilo Facebook) em fotos e mensagens. Campos: userId,
 ### Comment (`src/models/comment.ts`)
 Comentario polimorfico em fotos e mensagens. Campos: userId, targetType (`photo` | `message`), targetId, body (1-1000 chars, trim), editedAt, deletedAt (soft delete), timestamps. Indices: `(targetType, targetId, createdAt desc)` para listagem por alvo + `(userId, createdAt desc)` para historico de autor. Soft delete preserva a posicao na thread; o body e mascarado como "Comentario removido" quando listado.
 
+### Message (`src/models/message.ts`)
+Post de texto (1-2000 chars, trim) com imagem opcional anexada (Cloudinary). Campos: authorId, body, image (`{ url, publicId, width, height }`), editedAt, deletedAt (soft delete), timestamps. Indices: `{ createdAt desc }` para feed, `{ authorId, createdAt desc }` para historico de autor, `{ body: text }` para busca futura. Soft delete mantem o documento (reactions e comments ficam validos) mas mascara body como "Mensagem removida" e descarta a imagem na serializacao.
+
 ## Reacoes (sistema)
 
 API REST em `/api/reactions`:
@@ -113,7 +116,29 @@ API REST em `/api/comments`:
 
 Population do autor: apenas `name avatar cargo lotacaoSigla` - dados sensiveis (email, whatsapp) sao excluidos. Status: `401`, `400`, `403` (nao autor / nao admin), `404`, `410` (editar comentario removido), `200`/`201` sucesso, `500`.
 
-Suporte a `targetType: 'message'` idem reacoes - 404 ate issue #10.
+Suporte a `targetType: 'message'` ativado: o lookup verifica que a mensagem existe e nao esta soft-deletada.
+
+## Mensagens (sistema)
+
+API REST em `/api/messages`:
+- `POST` body `{ body, image? }` - cria mensagem (201). Texto obrigatorio mesmo com imagem; imagem `{ url, publicId, width, height }` obrigatoria nos 4 campos quando presente
+- `GET ?cursor=&limit=` - feed paginado cursor-based (`createdAt` desc); `limit` 1-50 (default 20). Resposta inclui autor populado (campos seguros) e contagens agregadas de `reactionsCount`/`commentsCount` em uma unica pipeline `$lookup` (sem N+1). Soft-deletadas voltam com body mascarado e `image: null`
+- `GET /api/messages/[id]` - detalhe com autor populado
+- `PATCH /api/messages/[id]` body `{ body }` - edita; apenas autor; atualiza `editedAt`. Imagem nao e editavel por aqui
+- `DELETE /api/messages/[id]` - soft delete (autor ou admin); idempotente
+
+Status: `401`, `400` (Zod), `403` (nao autor / nao admin), `404`, `410` (editar removida), `200`/`201`, `500`. Mensagens em pt-BR.
+
+### Componentes sociais (`src/components/social/`)
+
+Quatro componentes reutilizaveis criados na issue #10, consumidos pela timeline (#11) e pela retroatividade da galeria (#12):
+
+- `<ReactionPicker targetType targetId initialCounts? initialUserReaction?>` - botao + popover dos 6 emojis; toggle (POST/DELETE) com atualizacao otimista e rollback em erro
+- `<CommentThread targetType targetId initialItems? initialNextCursor? totalCount? defaultCollapsed?>` - lista paginada + form de novo comentario; carrega primeira pagina ao expandir quando nao pre-carregada
+- `<MessageCard message>` - header autor + body + imagem opcional (modal full-screen) + footer com ReactionPicker e CommentThread embutidos
+- `<MessageComposer onSuccess?>` - textarea + anexar imagem opcional + submit; faz upload via `/api/upload` e cria via `POST /api/messages`
+
+Date helper compartilhado: `formatRelativeTime` em `src/lib/date-utils.ts` retorna "agora ha pouco", "ha 3 min", "ha 2 h", "ha 5 dias" e cai para data absoluta pt-BR apos 7 dias.
 
 ## Autenticacao
 

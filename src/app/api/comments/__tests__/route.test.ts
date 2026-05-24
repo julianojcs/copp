@@ -5,6 +5,7 @@ const authMock = vi.fn()
 const connectDBMock = vi.fn().mockResolvedValue({})
 
 const photoFindByIdMock = vi.fn()
+const messageFindByIdMock = vi.fn()
 const commentCreateMock = vi.fn()
 const commentFindMock = vi.fn()
 
@@ -14,6 +15,13 @@ vi.mock('@/models/photo', () => ({
 	Photo: {
 		findById: (...a: unknown[]) => ({
 			select: () => ({ lean: () => photoFindByIdMock(...a) }),
+		}),
+	},
+}))
+vi.mock('@/models/message', () => ({
+	Message: {
+		findById: (...a: unknown[]) => ({
+			select: () => ({ lean: () => messageFindByIdMock(...a) }),
 		}),
 	},
 }))
@@ -81,11 +89,13 @@ function mockFindChain(result: MockComment[]) {
 beforeEach(() => {
 	authMock.mockReset()
 	photoFindByIdMock.mockReset()
+	messageFindByIdMock.mockReset()
 	commentCreateMock.mockReset()
 	commentFindMock.mockReset()
 
 	authMock.mockResolvedValue(sessionApproved)
 	photoFindByIdMock.mockResolvedValue({ _id: VALID_TARGET_ID })
+	messageFindByIdMock.mockResolvedValue({ _id: VALID_TARGET_ID })
 	commentCreateMock.mockResolvedValue({
 		_id: VALID_COMMENT_ID,
 		userId: VALID_USER_ID,
@@ -150,7 +160,8 @@ describe('POST /api/comments', () => {
 		expect(commentCreateMock).not.toHaveBeenCalled()
 	})
 
-	it('returns 404 for message target (Message model not yet implemented — issue #10)', async () => {
+	it('returns 404 when target message does not exist', async () => {
+		messageFindByIdMock.mockResolvedValueOnce(null)
 		const res = await POST(
 			makeRequest('POST', {
 				body: { targetType: 'message', targetId: VALID_TARGET_ID, body: 'oi' },
@@ -158,6 +169,29 @@ describe('POST /api/comments', () => {
 		)
 		expect(res.status).toBe(404)
 		expect(commentCreateMock).not.toHaveBeenCalled()
+	})
+
+	it('returns 404 when target message is soft-deleted', async () => {
+		messageFindByIdMock.mockResolvedValueOnce({
+			_id: VALID_TARGET_ID,
+			deletedAt: new Date(),
+		})
+		const res = await POST(
+			makeRequest('POST', {
+				body: { targetType: 'message', targetId: VALID_TARGET_ID, body: 'oi' },
+			}) as never,
+		)
+		expect(res.status).toBe(404)
+	})
+
+	it('creates a comment targeting a message', async () => {
+		const res = await POST(
+			makeRequest('POST', {
+				body: { targetType: 'message', targetId: VALID_TARGET_ID, body: 'top!' },
+			}) as never,
+		)
+		expect(res.status).toBe(201)
+		expect(commentCreateMock).toHaveBeenCalled()
 	})
 
 	it('creates the comment and returns 201 with the populated record', async () => {
