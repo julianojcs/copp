@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { EmojiTextarea } from './emoji-textarea'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -281,9 +281,9 @@ export function CommentThread({
 
 									{isEditing ? (
 										<div className="mt-2 space-y-2">
-											<Textarea
+											<EmojiTextarea
 												value={editDraft}
-												onChange={(e) => setEditDraft(e.target.value)}
+												onValueChange={setEditDraft}
 												onKeyDown={(e) => {
 													if (e.key === 'Escape') cancelEdit()
 												}}
@@ -401,15 +401,17 @@ export function CommentThread({
 			)}
 
 			<form onSubmit={submitNew} className="mt-3 flex items-start gap-2">
-				<Textarea
-					value={draft}
-					onChange={(e) => setDraft(e.target.value)}
-					placeholder="Escreva um comentário…"
-					rows={2}
-					maxLength={COMMENT_BODY_MAX_LENGTH}
-					disabled={submitting}
-					aria-label="Escrever comentário"
-				/>
+				<div className="flex-1">
+					<EmojiTextarea
+						value={draft}
+						onValueChange={setDraft}
+						placeholder="Escreva um comentário…"
+						rows={2}
+						maxLength={COMMENT_BODY_MAX_LENGTH}
+						disabled={submitting}
+						aria-label="Escrever comentário"
+					/>
+				</div>
 				<Button
 					type="submit"
 					size="icon"

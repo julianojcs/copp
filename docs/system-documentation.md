@@ -140,6 +140,14 @@ Quatro componentes reutilizaveis criados na issue #10, consumidos pela timeline 
 
 Em `<CommentThread>` cada item tem o mesmo kebab por item, com Editar e Excluir respeitando as mesmas regras (autor edita; autor ou admin exclui). `userId` populado e nullable - quando o autor foi removido o thread renderiza "Usuario removido" sem perder a posicao.
 
+### Suporte a emojis
+
+Todos os campos sociais usam `<EmojiTextarea>` (`src/components/social/emoji-textarea.tsx`), wrapper sobre `<Textarea>` com um trigger Smile no canto inferior direito. O click abre um `<Popover>` (shadcn) com o `<EmojiPicker>` (porta do jmr26: 7 categorias - sorrisos, gestos, coracoes, objetos, setas, natureza, comida - com busca pt-BR por keyword e tabs). Cada botão de emoji tem `aria-label` igual ao primeiro keyword para acessibilidade.
+
+Insercao acontece **na posicao do cursor** (ou substitui a selecao ativa) via `textarea.selectionStart/End` + `setSelectionRange` agendado em microtask. Reusado em MessageComposer, edicao inline do MessageCard, criacao e edicao no CommentThread.
+
+Dependencia: `@radix-ui/react-popover` (segue padrao dos outros primitives Radix ja no projeto).
+
 Date helper compartilhado: `formatRelativeTime` em `src/lib/date-utils.ts` retorna "agora ha pouco", "ha 3 min", "ha 2 h", "ha 5 dias" e cai para data absoluta pt-BR apos 7 dias.
 
 ## Timeline (feed do dashboard)

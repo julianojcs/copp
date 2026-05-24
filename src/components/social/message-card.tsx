@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
+import { EmojiTextarea } from './emoji-textarea'
 import {
 	Dialog,
 	DialogContent,
@@ -246,9 +246,9 @@ export function MessageCard({ message, className }: MessageCardProps) {
 
 				{editing ? (
 					<div className="space-y-2">
-						<Textarea
+						<EmojiTextarea
 							value={draft}
-							onChange={(e) => setDraft(e.target.value)}
+							onValueChange={setDraft}
 							onKeyDown={(e) => {
 								if (e.key === 'Escape') cancelEdit()
 							}}

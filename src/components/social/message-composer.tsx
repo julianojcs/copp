@@ -6,7 +6,7 @@ import { ImagePlus, Loader2, Send, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
+import { EmojiTextarea } from './emoji-textarea'
 import { MESSAGE_BODY_MAX_LENGTH } from '@/lib/constants'
 
 interface UploadedImage {
@@ -115,9 +115,9 @@ export function MessageComposer({ onSuccess, className }: MessageComposerProps) 
 		<Card className={className}>
 			<CardContent className="pt-6">
 				<form onSubmit={submit} className="space-y-3">
-					<Textarea
+					<EmojiTextarea
 						value={body}
-						onChange={(e) => setBody(e.target.value)}
+						onValueChange={setBody}
 						placeholder="O que você quer compartilhar com a turma?"
 						rows={3}
 						maxLength={MESSAGE_BODY_MAX_LENGTH}
