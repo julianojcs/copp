@@ -57,3 +57,17 @@ export const REACTION_TARGET_TYPES = {
 export type ReactionTargetType =
   typeof REACTION_TARGET_TYPES[keyof typeof REACTION_TARGET_TYPES]
 
+// Polymorphic target types that can receive comments — same set as
+// reactions today, kept separate so the two domains can evolve apart.
+export const COMMENT_TARGET_TYPES = {
+  PHOTO: 'photo',
+  MESSAGE: 'message',
+} as const
+
+export type CommentTargetType =
+  typeof COMMENT_TARGET_TYPES[keyof typeof COMMENT_TARGET_TYPES]
+
+export const COMMENT_BODY_MAX_LENGTH = 1000
+export const COMMENT_LIST_DEFAULT_LIMIT = 20
+export const COMMENT_LIST_MAX_LIMIT = 50
+

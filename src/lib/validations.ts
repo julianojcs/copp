@@ -5,6 +5,10 @@ import {
   PF_CARGOS,
   REACTION_TYPES,
   REACTION_TARGET_TYPES,
+  COMMENT_TARGET_TYPES,
+  COMMENT_BODY_MAX_LENGTH,
+  COMMENT_LIST_DEFAULT_LIMIT,
+  COMMENT_LIST_MAX_LIMIT,
 } from '@/lib/constants'
 import { VALID_UFS } from '@/lib/constants/brazilian-states'
 
@@ -188,3 +192,57 @@ export const reactionQuerySchema = z.object({
 export type ReactionUpsertInput = z.infer<typeof reactionUpsertSchema>
 export type ReactionDeleteInput = z.infer<typeof reactionDeleteSchema>
 export type ReactionQueryInput = z.infer<typeof reactionQuerySchema>
+
+// Comments (polymorphic comments on photos and messages)
+export const commentTargetTypeSchema = z.enum(
+  Object.values(COMMENT_TARGET_TYPES) as [string, ...string[]],
+)
+
+export const commentBodySchema = z
+  .string()
+  .trim()
+  .min(1, 'Comentário não pode ser vazio')
+  .max(
+    COMMENT_BODY_MAX_LENGTH,
+    `Comentário não pode exceder ${COMMENT_BODY_MAX_LENGTH} caracteres`,
+  )
+
+export const commentCreateSchema = z.object({
+  targetType: commentTargetTypeSchema,
+  targetId: objectIdSchema,
+  body: commentBodySchema,
+})
+
+export const commentUpdateSchema = z.object({
+  body: commentBodySchema,
+})
+
+const commentLimitSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(COMMENT_LIST_MAX_LIMIT)
+  .default(COMMENT_LIST_DEFAULT_LIMIT)
+
+// Cursor is the ISO timestamp of the previous page's oldest item.
+const commentCursorSchema = z
+  .string()
+  .datetime({ offset: true })
+  .optional()
+  .or(z.literal('').transform(() => undefined))
+
+export const commentListQuerySchema = z.object({
+  targetType: commentTargetTypeSchema,
+  targetId: objectIdSchema,
+  cursor: commentCursorSchema,
+  limit: commentLimitSchema.optional(),
+  // 'true' to include soft-deleted (body is masked); anything else excludes them
+  includeDeleted: z
+    .union([z.literal('true'), z.literal('false')])
+    .optional()
+    .transform((v) => v === 'true'),
+})
+
+export type CommentCreateInput = z.infer<typeof commentCreateSchema>
+export type CommentUpdateInput = z.infer<typeof commentUpdateSchema>
+export type CommentListQuery = z.infer<typeof commentListQuerySchema>
