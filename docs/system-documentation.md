@@ -135,8 +135,10 @@ Quatro componentes reutilizaveis criados na issue #10, consumidos pela timeline 
 
 - `<ReactionPicker targetType targetId initialCounts? initialUserReaction?>` - botao + popover dos 6 emojis; toggle (POST/DELETE) com atualizacao otimista e rollback em erro
 - `<CommentThread targetType targetId initialItems? initialNextCursor? totalCount? defaultCollapsed?>` - lista paginada + form de novo comentario; carrega primeira pagina ao expandir quando nao pre-carregada
-- `<MessageCard message>` - header autor + body + imagem opcional (modal full-screen) + footer com ReactionPicker e CommentThread embutidos
+- `<MessageCard message>` - header autor + body + imagem opcional (modal full-screen) + footer com ReactionPicker e CommentThread embutidos. Kebab (`···`) no header expoe Editar (autor) e Excluir (autor ou admin); edicao inline via `<Textarea>` + PATCH; exclusao via `<AlertDialog>` + DELETE; em 410 ou sucesso atualiza o state local sem refetch
 - `<MessageComposer onSuccess?>` - textarea + anexar imagem opcional + submit; faz upload via `/api/upload` e cria via `POST /api/messages`
+
+Em `<CommentThread>` cada item tem o mesmo kebab por item, com Editar e Excluir respeitando as mesmas regras (autor edita; autor ou admin exclui). `userId` populado e nullable - quando o autor foi removido o thread renderiza "Usuario removido" sem perder a posicao.
 
 Date helper compartilhado: `formatRelativeTime` em `src/lib/date-utils.ts` retorna "agora ha pouco", "ha 3 min", "ha 2 h", "ha 5 dias" e cai para data absoluta pt-BR apos 7 dias.
 
@@ -234,7 +236,8 @@ UI: card "Alterar Senha" em `src/app/(dashboard)/profile/page.tsx` consumindo o 
 
 - Runner: Vitest 4 com `projects` em `vitest.config.ts`
   - Projeto `node`: `*.test.ts` em ambiente Node (logica pura + route handlers via `vi.mock`)
-  - Projeto `dom`: `*.test.tsx` em ambiente happy-dom com Testing Library; setup em `src/test/setup-dom.ts`
+  - Projeto `dom`: `*.test.tsx` em ambiente happy-dom com Testing Library; setup em `src/test/setup-dom.ts` (inclui shims para `HTMLElement.prototype.hasPointerCapture`/`setPointerCapture`/`releasePointerCapture`/`scrollIntoView` que o happy-dom nao implementa - sem eles os primitives flutuantes do Radix - `DropdownMenu`, `Select`, `Popover` - nao respondem a click)
+- Para abrir menus do Radix em testes, prefira `userEvent.setup()` + `await user.click(trigger)` em vez de `fireEvent.click` (o `fireEvent` nao dispara o `onPointerDown` que o Radix escuta para abrir)
 - Convencoes: as asserts seguem o convencional Vitest (`toBe`, `toMatchObject`, `toHaveBeenCalledTimes`, `toBeTruthy`); `toBeInTheDocument`/`toBeDisabled` (jest-dom) NAO sao usados - prefira `screen.queryByText(...)` e `element.hasAttribute(...)` para a11y/state.
 
 ### Cobertura atual (354 testes em 36 arquivos)

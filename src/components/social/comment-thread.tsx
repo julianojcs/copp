@@ -1,14 +1,32 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Send, Loader2 } from 'lucide-react'
+import { Loader2, MoreHorizontal, Pencil, Send, Trash2 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { formatRelativeTime } from '@/lib/date-utils'
 import {
 	COMMENT_BODY_MAX_LENGTH,
+	USER_ROLES,
 	type CommentTargetType,
 } from '@/lib/constants'
 
@@ -18,14 +36,17 @@ export interface CommentItem {
 	createdAt: string
 	editedAt?: string | null
 	deletedAt?: string | null
+	/** May be null when the author was deleted (orphaned reference). */
 	userId: {
 		_id: string
-		name: string
+		name?: string
 		avatar?: string
 		cargo?: string
 		lotacaoSigla?: string
-	}
+	} | null
 }
+
+const DELETED_AUTHOR_NAME = 'Usuário removido'
 
 export interface CommentThreadProps {
 	targetType: CommentTargetType
@@ -39,7 +60,8 @@ export interface CommentThreadProps {
 	className?: string
 }
 
-function getInitials(name: string) {
+function getInitials(name: string | undefined | null) {
+	if (!name) return '?'
 	return name
 		.split(' ')
 		.map((n) => n[0])
@@ -49,11 +71,12 @@ function getInitials(name: string) {
 }
 
 /**
- * Polymorphic comment thread — lists comments and accepts new ones.
+ * Polymorphic comment thread — lists comments, accepts new ones, and
+ * lets the author edit/delete their own (admins can delete any).
  *
- * Starts collapsed by default to keep cards compact; expanding loads
- * the first page if one wasn't pre-fetched. Soft-deleted comments
- * are shown with their body masked by the server.
+ * Edits happen inline (textarea replaces the body). Deletes go
+ * through an AlertDialog confirmation and remove the item from the
+ * local list (matching the default exclusion in `GET /api/comments`).
  */
 export function CommentThread({
 	targetType,
@@ -64,6 +87,7 @@ export function CommentThread({
 	defaultCollapsed = true,
 	className,
 }: CommentThreadProps) {
+	const { data: session } = useSession()
 	const [expanded, setExpanded] = useState(!defaultCollapsed)
 	const [items, setItems] = useState<CommentItem[]>(initialItems ?? [])
 	const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor)
@@ -71,13 +95,20 @@ export function CommentThread({
 	const [submitting, setSubmitting] = useState(false)
 	const [draft, setDraft] = useState('')
 
+	const [editingId, setEditingId] = useState<string | null>(null)
+	const [editDraft, setEditDraft] = useState('')
+	const [savingEdit, setSavingEdit] = useState(false)
+
+	const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+	const [deleting, setDeleting] = useState(false)
+
+	const viewerId = session?.user?.id
+	const isAdmin = session?.user?.role === USER_ROLES.ADMIN
+
 	async function loadPage(cursor: string | null = null) {
 		setLoading(true)
 		try {
-			const params = new URLSearchParams({
-				targetType,
-				targetId,
-			})
+			const params = new URLSearchParams({ targetType, targetId })
 			if (cursor) params.set('cursor', cursor)
 			const res = await fetch(`/api/comments?${params.toString()}`)
 			if (!res.ok) throw new Error('load failed')
@@ -101,7 +132,7 @@ export function CommentThread({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [expanded])
 
-	async function submit(e: React.FormEvent) {
+	async function submitNew(e: React.FormEvent) {
 		e.preventDefault()
 		const body = draft.trim()
 		if (!body || submitting) return
@@ -123,6 +154,74 @@ export function CommentThread({
 			toast.error(err instanceof Error ? err.message : 'Falha ao enviar')
 		} finally {
 			setSubmitting(false)
+		}
+	}
+
+	function openEdit(c: CommentItem) {
+		setEditingId(c._id)
+		setEditDraft(c.body)
+	}
+
+	function cancelEdit() {
+		setEditingId(null)
+		setEditDraft('')
+	}
+
+	async function saveEdit() {
+		if (!editingId || savingEdit) return
+		const trimmed = editDraft.trim()
+		if (!trimmed) return
+		setSavingEdit(true)
+		try {
+			const res = await fetch(`/api/comments/${editingId}`, {
+				method: 'PATCH',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ body: trimmed }),
+			})
+			if (res.status === 410) {
+				// Server says the comment is already deleted — drop it locally.
+				setItems((prev) => prev.filter((c) => c._id !== editingId))
+				cancelEdit()
+				toast.error('Comentário foi removido e não pode ser editado')
+				return
+			}
+			if (!res.ok) {
+				const err = (await res.json().catch(() => ({}))) as { error?: string }
+				throw new Error(err.error ?? 'Falha ao salvar')
+			}
+			const now = new Date().toISOString()
+			setItems((prev) =>
+				prev.map((c) =>
+					c._id === editingId
+						? { ...c, body: trimmed, editedAt: now }
+						: c,
+				),
+			)
+			cancelEdit()
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Falha ao salvar')
+		} finally {
+			setSavingEdit(false)
+		}
+	}
+
+	async function confirmDelete() {
+		if (!pendingDeleteId || deleting) return
+		const id = pendingDeleteId
+		setDeleting(true)
+		try {
+			const res = await fetch(`/api/comments/${id}`, { method: 'DELETE' })
+			if (!res.ok) {
+				const err = (await res.json().catch(() => ({}))) as { error?: string }
+				throw new Error(err.error ?? 'Falha ao remover')
+			}
+			setItems((prev) => prev.filter((c) => c._id !== id))
+			setPendingDeleteId(null)
+			toast.success('Comentário removido')
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'Falha ao remover')
+		} finally {
+			setDeleting(false)
 		}
 	}
 
@@ -155,34 +254,131 @@ export function CommentThread({
 						Nenhum comentário ainda. Seja o primeiro!
 					</li>
 				)}
-				{items.map((c) => (
-					<li key={c._id} className="flex items-start gap-2">
-						<Avatar className="h-8 w-8 flex-shrink-0">
-							<AvatarImage src={c.userId.avatar} alt={c.userId.name} />
-							<AvatarFallback>{getInitials(c.userId.name)}</AvatarFallback>
-						</Avatar>
-						<div className="min-w-0 flex-1">
-							<div className="rounded-lg bg-muted px-3 py-2">
-								<p className="text-xs font-semibold">{c.userId.name}</p>
-								{c.userId.cargo && (
-									<p className="text-[10px] text-muted-foreground">
-										{c.userId.cargo}
-										{c.userId.lotacaoSigla
-											? ` · ${c.userId.lotacaoSigla}`
-											: ''}
-									</p>
-								)}
-								<p className="mt-1 whitespace-pre-wrap break-words text-sm">
-									{c.body}
+				{items.map((c) => {
+					const author = c.userId
+					const authorName = author?.name ?? DELETED_AUTHOR_NAME
+					const isOwn = author ? viewerId === author._id : false
+					const canEdit = isOwn
+					const canDelete = isOwn || isAdmin
+					const isEditing = editingId === c._id
+					return (
+						<li key={c._id} className="flex items-start gap-2">
+							<Avatar className="h-8 w-8 shrink-0">
+								<AvatarImage src={author?.avatar} alt={authorName} />
+								<AvatarFallback>{getInitials(author?.name)}</AvatarFallback>
+							</Avatar>
+							<div className="min-w-0 flex-1">
+								<div className="relative rounded-lg bg-muted px-3 py-2 pr-8">
+									<p className="text-xs font-semibold">{authorName}</p>
+									{author?.cargo && (
+										<p className="text-[10px] text-muted-foreground">
+											{author.cargo}
+											{author.lotacaoSigla
+												? ` · ${author.lotacaoSigla}`
+												: ''}
+										</p>
+									)}
+
+									{isEditing ? (
+										<div className="mt-2 space-y-2">
+											<Textarea
+												value={editDraft}
+												onChange={(e) => setEditDraft(e.target.value)}
+												onKeyDown={(e) => {
+													if (e.key === 'Escape') cancelEdit()
+												}}
+												maxLength={COMMENT_BODY_MAX_LENGTH}
+												rows={2}
+												disabled={savingEdit}
+												aria-label="Editar comentário"
+												autoFocus
+											/>
+											<div className="flex items-center justify-between text-xs">
+												<span
+													className="tabular-nums text-muted-foreground"
+													aria-label={`${editDraft.length} de ${COMMENT_BODY_MAX_LENGTH} caracteres`}
+												>
+													{editDraft.length}/{COMMENT_BODY_MAX_LENGTH}
+												</span>
+												<div className="flex items-center gap-2">
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														onClick={cancelEdit}
+														disabled={savingEdit}
+													>
+														Cancelar
+													</Button>
+													<Button
+														type="button"
+														size="sm"
+														onClick={saveEdit}
+														disabled={
+															savingEdit || editDraft.trim().length === 0
+														}
+													>
+														{savingEdit ? (
+															<>
+																<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+																Salvando…
+															</>
+														) : (
+															'Salvar'
+														)}
+													</Button>
+												</div>
+											</div>
+										</div>
+									) : (
+										<p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm">
+											{c.body}
+										</p>
+									)}
+
+									{!isEditing && (canEdit || canDelete) && (
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="absolute right-1 top-1 h-6 w-6"
+													aria-label="Ações do comentário"
+												>
+													<MoreHorizontal
+														className="h-3.5 w-3.5"
+														aria-hidden
+													/>
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												{canEdit && (
+													<DropdownMenuItem onClick={() => openEdit(c)}>
+														<Pencil className="mr-2 h-4 w-4" aria-hidden />
+														Editar
+													</DropdownMenuItem>
+												)}
+												{canDelete && (
+													<DropdownMenuItem
+														onClick={() => setPendingDeleteId(c._id)}
+														className="text-destructive focus:text-destructive"
+													>
+														<Trash2 className="mr-2 h-4 w-4" aria-hidden />
+														Excluir
+													</DropdownMenuItem>
+												)}
+											</DropdownMenuContent>
+										</DropdownMenu>
+									)}
+								</div>
+								<p className="mt-1 text-[10px] text-muted-foreground">
+									{formatRelativeTime(c.createdAt)}
+									{c.editedAt ? ' · editado' : ''}
 								</p>
 							</div>
-							<p className="mt-1 text-[10px] text-muted-foreground">
-								{formatRelativeTime(c.createdAt)}
-								{c.editedAt ? ' · editado' : ''}
-							</p>
-						</div>
-					</li>
-				))}
+						</li>
+					)
+				})}
 			</ul>
 
 			{nextCursor && (
@@ -204,7 +400,7 @@ export function CommentThread({
 				</Button>
 			)}
 
-			<form onSubmit={submit} className="mt-3 flex items-start gap-2">
+			<form onSubmit={submitNew} className="mt-3 flex items-start gap-2">
 				<Textarea
 					value={draft}
 					onChange={(e) => setDraft(e.target.value)}
@@ -227,6 +423,43 @@ export function CommentThread({
 					)}
 				</Button>
 			</form>
+
+			<AlertDialog
+				open={pendingDeleteId !== null}
+				onOpenChange={(open) => {
+					if (!open) setPendingDeleteId(null)
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Excluir comentário?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta ação não pode ser desfeita. O comentário será removido da
+							conversa.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={(e) => {
+								e.preventDefault()
+								void confirmDelete()
+							}}
+							disabled={deleting}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							{deleting ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Excluindo…
+								</>
+							) : (
+								'Excluir'
+							)}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

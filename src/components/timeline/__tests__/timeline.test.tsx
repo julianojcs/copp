@@ -4,6 +4,16 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { Timeline } from '@/components/timeline/timeline'
 import type { TimelineEvent } from '@/lib/timeline-types'
 
+// `<Timeline>` indirectly mounts `<CommentThread>` and `<MessageCard>`,
+// both of which call `useSession()`. Stub it so we don't need a real
+// SessionProvider wrapper in every test.
+vi.mock('next-auth/react', () => ({
+	useSession: () => ({ data: null, status: 'unauthenticated' }),
+}))
+vi.mock('sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
+}))
+
 const fetchMock = vi.fn()
 
 beforeEach(() => {
