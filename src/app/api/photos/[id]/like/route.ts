@@ -7,6 +7,13 @@ interface RouteParams {
 	params: Promise<{ id: string }>
 }
 
+/**
+ * @deprecated Legacy single-emoji like endpoint kept for backward
+ * compatibility with the current gallery UI. New clients should use
+ * `POST /api/reactions` (polymorphic, supports 6 reaction types).
+ * This endpoint will be removed when the gallery is migrated to
+ * `<ReactionPicker>` in issue #6.
+ */
 export async function POST(req: NextRequest, { params }: RouteParams) {
 	try {
 		const session = await auth()
