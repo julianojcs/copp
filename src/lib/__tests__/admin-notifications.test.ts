@@ -2,8 +2,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 const leanMock = vi.fn()
-const selectMock = vi.fn(() => ({ lean: leanMock }))
-const findMock = vi.fn(() => ({ select: selectMock }))
+const selectMock = vi.fn((..._args: unknown[]) => ({ lean: leanMock }))
+const findMock = vi.fn((..._args: unknown[]) => ({ select: selectMock }))
 const sendMock = vi.fn()
 
 vi.mock('@/models/user', () => ({
