@@ -87,6 +87,9 @@ Foto da galeria: uploadedBy, url, publicId, thumbnailUrl, title, description, lo
 ### Reaction (`src/models/reaction.ts`)
 Reacao emoji polimorfica (estilo Facebook) em fotos e mensagens. Campos: userId, targetType (`photo` | `message`), targetId, type (`like` | `love` | `laugh` | `wow` | `sad` | `angry`). Indices: unico em `(userId, targetType, targetId)` (1 reacao por usuario por alvo - trocar emoji e substituicao via upsert) + listagem em `(targetType, targetId, createdAt desc)`.
 
+### Comment (`src/models/comment.ts`)
+Comentario polimorfico em fotos e mensagens. Campos: userId, targetType (`photo` | `message`), targetId, body (1-1000 chars, trim), editedAt, deletedAt (soft delete), timestamps. Indices: `(targetType, targetId, createdAt desc)` para listagem por alvo + `(userId, createdAt desc)` para historico de autor. Soft delete preserva a posicao na thread; o body e mascarado como "Comentario removido" quando listado.
+
 ## Reacoes (sistema)
 
 API REST em `/api/reactions`:
@@ -99,6 +102,18 @@ Status: `401` nao autenticado, `400` payload invalido (Zod), `404` alvo inexiste
 Migracao do legado `Photo.likes`: `npx tsx scripts/migrate-photo-likes-to-reactions.ts` (suporta `--dry-run`). Idempotente via indice unico - re-execucoes pulam duplicatas. O campo `Photo.likes` e o endpoint `POST /api/photos/[id]/like` ficam funcionais ate a issue #6 retroceder a galeria.
 
 Suporte a `targetType: 'message'` esta declarado no enum, mas o lookup retorna 404 ate a issue #10 introduzir o modelo `Message`.
+
+## Comentarios (sistema)
+
+API REST em `/api/comments`:
+- `POST` body `{ targetType, targetId, body }` - cria comentario (201)
+- `GET ?targetType=&targetId=&cursor=&limit=&includeDeleted=` - lista paginado cursor-based (createdAt desc); `limit` 1-50 (default 20); `cursor` ISO datetime do ultimo item da pagina anterior; `includeDeleted=true` inclui soft-deleted com body mascarado
+- `PATCH /api/comments/[id]` body `{ body }` - edita; **apenas autor** (admin nao pode reescrever); atualiza `editedAt`
+- `DELETE /api/comments/[id]` - soft delete (autor ou admin); idempotente
+
+Population do autor: apenas `name avatar cargo lotacaoSigla` - dados sensiveis (email, whatsapp) sao excluidos. Status: `401`, `400`, `403` (nao autor / nao admin), `404`, `410` (editar comentario removido), `200`/`201` sucesso, `500`.
+
+Suporte a `targetType: 'message'` idem reacoes - 404 ate issue #10.
 
 ## Autenticacao
 
